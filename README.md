@@ -64,6 +64,25 @@ cargo clippy -- -D warnings
 cargo test
 ```
 
+## Package And Sync
+
+Build the release binary and copy it to the parent Granoflow repo's stable
+scripts path:
+
+```text
+scripts/package.sh
+```
+
+By default this writes:
+
+```text
+../granoflow/scripts/granoflow-cli
+```
+
+`scripts/anz` in the parent repo can then call the latest copied binary with a
+stable path. Override the sync destination with `GRANOFLOW_CLI_SYNC_PATH` when
+needed.
+
 ## Release Smoke
 
 Release artifact names use:
