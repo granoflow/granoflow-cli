@@ -59,10 +59,19 @@ granoflow ai-agent task import --input <file|-> --json
 ## Verification
 
 ```text
-cargo fmt --check
-cargo clippy -- -D warnings
-cargo test
+scripts/quality.sh
 ```
+
+The quality gate runs:
+
+```text
+cargo fmt --check
+cargo clippy --all-targets --all-features -- -D warnings
+cargo test --all-targets --all-features
+```
+
+CI runs the same gate on pull requests and `main` pushes. Formatting drift,
+clippy warnings, and failing tests are treated as release blockers.
 
 ## Package And Sync
 
