@@ -76,12 +76,14 @@ scripts/package.sh
 By default this writes:
 
 ```text
-../granoflow/scripts/granoflow-cli
+../scripts/granoflow-cli
 ```
 
 `scripts/anz` in the parent repo can then call the latest copied binary with a
 stable path. Override the sync destination with `GRANOFLOW_CLI_SYNC_PATH` when
-needed.
+needed. If this repository is checked out beside the parent Granoflow repo
+instead of as a submodule, the package script falls back to the legacy
+`../granoflow/scripts/granoflow-cli` destination.
 
 ## Release Smoke
 
