@@ -4,7 +4,14 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 TARGET="${GRANOFLOW_CLI_TARGET:-}"
 PROFILE="release"
-PARENT_DEST="${GRANOFLOW_CLI_SYNC_PATH:-$(cd "$ROOT_DIR/.." && pwd)/granoflow/scripts/granoflow-cli}"
+
+if [[ -f "$ROOT_DIR/../scripts/anz" ]]; then
+  PARENT_ROOT="$(cd "$ROOT_DIR/.." && pwd)"
+else
+  PARENT_ROOT="$(cd "$ROOT_DIR/../granoflow" && pwd)"
+fi
+
+PARENT_DEST="${GRANOFLOW_CLI_SYNC_PATH:-$PARENT_ROOT/scripts/granoflow-cli}"
 
 if [[ -n "$TARGET" ]]; then
   cargo build --release --target "$TARGET" --manifest-path "$ROOT_DIR/Cargo.toml"
