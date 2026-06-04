@@ -1,0 +1,218 @@
+use std::{fs, io};
+
+use clap::Parser;
+use serde_json::{json, Value};
+
+use crate::{
+    cli::*,
+    client::{request_preview, ApiClient},
+    config::RuntimeConfig,
+    errors::{CliError, CliResult},
+    help_catalog,
+    output::{print_json, Envelope},
+};
+
+pub async fn run() -> anyhow::Result<i32> {
+    let cli = Cli::parse();
+    let json_mode = cli.json || matches!(&cli.command, Some(Command::Help(args)) if args.json);
+    match run_inner(&cli).await {
+        Ok(value) => {
+            if json_mode {
+                Ok(print_json(&Envelope::success(value)))
+            } else {
+                println!("{}", human_value(value));
+                Ok(0)
+            }
+        }
+        Err(error) => {
+            if json_mode {
+                Ok(print_json(&Envelope::error(&error)))
+            } else {
+                eprintln!("{error}");
+                Ok(error.exit_code())
+            }
+        }
+    }
+}
+
+async fn run_inner(cli: &Cli) -> CliResult<Value> {
+    let config = RuntimeConfig::load(cli)?;
+    let client = ApiClient::new(config.clone());
+    match &cli.command {
+        None => Ok(json!({"help": help_catalog::human_help(&cli.lang, &[])})),
+        Some(Command::Help(args)) => {
+            if args.json || cli.json {
+                Ok(help_catalog::json_help(&cli.lang, &args.command))
+            } else {
+                Ok(json!({"help": help_catalog::human_help(&cli.lang, &args.command)}))
+            }
+        }
+        Some(Command::Config) => Ok(config.redacted_json()),
+        Some(Command::Health) => client.get("/v1/health").await,
+        Some(Command::Api(api)) => match api.command {
+            ApiSubcommand::Version => client.get("/v1/version").await,
+            ApiSubcommand::Capabilities => client.get("/v1/capabilities").await,
+        },
+        Some(Command::Task(task)) => run_task(&client, task).await,
+        Some(Command::Project(project)) => run_project(&client, project).await,
+        Some(Command::Review(review)) => run_review(&client, review).await,
+        Some(Command::AiAgent(ai_agent)) => run_ai_agent(&client, ai_agent).await,
+    }
+}
+
+async fn run_task(client: &ApiClient, task: &TaskCommand) -> CliResult<Value> {
+    match &task.command {
+        TaskSubcommand::List => client.get("/v1/tasks").await,
+        TaskSubcommand::Create(args) => {
+            let body = read_json_input(&args.input)?;
+            if args.dry_run {
+                Ok(request_preview("POST", "/v1/tasks", body))
+            } else {
+                client.post("/v1/tasks", body).await
+            }
+        }
+        TaskSubcommand::Complete(args) => {
+            let body = args
+                .input
+                .as_ref()
+                .map(|path| read_json_input(path))
+                .transpose()?
+                .unwrap_or_else(|| json!({}));
+            let path = format!("/v1/tasks/{}/complete", args.id);
+            if args.dry_run {
+                Ok(request_preview("POST", &path, body))
+            } else {
+                client.post(&path, body).await
+            }
+        }
+    }
+}
+
+async fn run_project(client: &ApiClient, project: &ProjectCommand) -> CliResult<Value> {
+    match &project.command {
+        ProjectSubcommand::List => client.get("/v1/projects").await,
+        ProjectSubcommand::Create(args) => {
+            let body = read_json_input(&args.input)?;
+            if args.dry_run {
+                Ok(request_preview("POST", "/v1/projects", body))
+            } else {
+                client.post("/v1/projects", body).await
+            }
+        }
+    }
+}
+
+async fn run_review(client: &ApiClient, review: &ReviewCommand) -> CliResult<Value> {
+    match &review.period {
+        ReviewPeriod::Day(day) => match &day.command {
+            ReviewDaySubcommand::Show(args) => {
+                client.get(&format!("/v1/reviews/days/{}", args.date)).await
+            }
+            ReviewDaySubcommand::Update(args) => {
+                write_or_preview(
+                    client,
+                    "PATCH",
+                    &format!("/v1/reviews/days/{}", args.date),
+                    read_json_input(&args.input)?,
+                    args.dry_run,
+                )
+                .await
+            }
+        },
+        ReviewPeriod::Week(week) => match &week.command {
+            ReviewWeekSubcommand::Show(args) => {
+                client
+                    .get(&format!("/v1/reviews/weeks/{}", args.week_start))
+                    .await
+            }
+            ReviewWeekSubcommand::Update(args) => {
+                write_or_preview(
+                    client,
+                    "PATCH",
+                    &format!("/v1/reviews/weeks/{}", args.week_start),
+                    read_json_input(&args.input)?,
+                    args.dry_run,
+                )
+                .await
+            }
+            ReviewWeekSubcommand::Value(args) => {
+                write_or_preview(
+                    client,
+                    "PUT",
+                    &format!(
+                        "/v1/reviews/weeks/{}/values/{}",
+                        args.week_start, args.value_id
+                    ),
+                    read_json_input(&args.input)?,
+                    args.dry_run,
+                )
+                .await
+            }
+        },
+    }
+}
+
+async fn run_ai_agent(client: &ApiClient, ai_agent: &AiAgentCommand) -> CliResult<Value> {
+    match &ai_agent.command {
+        AiAgentSubcommand::Tools => client.get("/v1/ai-agent/tools").await,
+        AiAgentSubcommand::Task(task) => match &task.command {
+            AiAgentTaskSubcommand::Export(args) => {
+                client
+                    .get(&format!("/v1/ai-agent/tasks/{}/export", args.id))
+                    .await
+            }
+            AiAgentTaskSubcommand::Validate(args) => {
+                client
+                    .post("/v1/ai-agent/tasks/validate", read_json_input(&args.input)?)
+                    .await
+            }
+            AiAgentTaskSubcommand::Import(args) => {
+                let path = if args.dry_run {
+                    "/v1/ai-agent/tasks/import?dryRun=true"
+                } else {
+                    "/v1/ai-agent/tasks/import"
+                };
+                client.post(path, read_json_input(&args.input)?).await
+            }
+        },
+    }
+}
+
+async fn write_or_preview(
+    client: &ApiClient,
+    method: &str,
+    path: &str,
+    body: Value,
+    dry_run: bool,
+) -> CliResult<Value> {
+    if dry_run {
+        return Ok(request_preview(method, path, body));
+    }
+    match method {
+        "PATCH" => client.patch(path, body).await,
+        "PUT" => client.put(path, body).await,
+        "POST" => client.post(path, body).await,
+        _ => Err(CliError::Internal(format!("unsupported method {method}"))),
+    }
+}
+
+fn read_json_input(path: &str) -> CliResult<Value> {
+    let raw = if path == "-" {
+        let mut buffer = String::new();
+        io::Read::read_to_string(&mut io::stdin(), &mut buffer)
+            .map_err(|error| CliError::Usage(format!("failed to read stdin: {error}")))?;
+        buffer
+    } else {
+        fs::read_to_string(path)
+            .map_err(|error| CliError::Usage(format!("failed to read {path}: {error}")))?
+    };
+    serde_json::from_str(&raw)
+        .map_err(|error| CliError::Usage(format!("input must be valid JSON: {error}")))
+}
+
+fn human_value(value: Value) -> String {
+    if let Some(help) = value.get("help").and_then(Value::as_str) {
+        return help.to_string();
+    }
+    serde_json::to_string_pretty(&value).expect("JSON value serializes")
+}
