@@ -5,6 +5,9 @@ edition = "2021"
 description = "Granoflow Local HTTP API client CLI"
 license = "MIT"
 
+[lints.rust]
+unsafe_code = "forbid"
+
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive", "env"] }
