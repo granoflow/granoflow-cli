@@ -8,6 +8,9 @@ license = "MIT"
 [lints.rust]
 unsafe_code = "forbid"
 
+[lints.clippy]
+all = "deny"
+
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive", "env"] }
