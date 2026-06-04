@@ -27,6 +27,17 @@ cargo test --all-targets --all-features
 Pull requests should keep this gate green. Formatting drift, clippy warnings,
 and failing tests are treated as release blockers.
 
+## Git Hooks
+
+Install the optional local pre-push hook once per checkout:
+
+```text
+scripts/setup-hooks.sh
+```
+
+The hook runs `scripts/quality.sh` before every push. CI still runs the same
+gate, so the hook is a local early warning rather than the only line of defense.
+
 The lint standards are checked from these files:
 
 - `Cargo.toml` `[lints]`: forbids unsafe code and denies the default clippy lint set.

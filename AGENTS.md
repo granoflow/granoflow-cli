@@ -18,10 +18,12 @@
 
 - Local quality gate: `scripts/quality.sh`.
 - Lint configuration files: `Cargo.toml` `[lints]`, `rustfmt.toml`, and `clippy.toml`.
+- Local pre-push hook: run `scripts/setup-hooks.sh` once; it installs `scripts/git-hooks/pre-push`.
 - The gate must run:
   - `cargo fmt --check`
   - `cargo clippy --all-targets --all-features -- -D warnings`
   - `cargo test --all-targets --all-features`
+- The pre-push hook must call `scripts/quality.sh`; do not maintain a separate gate there.
 - Rust code changes should finish with `scripts/quality.sh`.
 - If only a subset is run, the final response must explain why and name the residual risk.
 
@@ -38,5 +40,6 @@
 ## Open Source Expectations
 
 - README and CONTRIBUTING must show the same quality gate used by CI.
+- The documented pre-push hook must use the same quality gate as CI.
 - CI must fail on formatting, clippy warnings, and tests.
 - Public docs should describe supported behavior only; do not document internal Granoflow app workflows as CLI responsibilities.

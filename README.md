@@ -73,6 +73,14 @@ cargo test --all-targets --all-features
 CI runs the same gate on pull requests and `main` pushes. Formatting drift,
 clippy warnings, and failing tests are treated as release blockers.
 
+Install the optional local pre-push hook with:
+
+```text
+scripts/setup-hooks.sh
+```
+
+The hook runs `scripts/quality.sh` before every push.
+
 Lint configuration lives in:
 
 - `Cargo.toml` `[lints]` for Rust and clippy lint levels.
