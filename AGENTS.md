@@ -17,6 +17,7 @@
 ## Quality Gate
 
 - Local quality gate: `scripts/quality.sh`.
+- Lint configuration files: `Cargo.toml` `[lints]`, `rustfmt.toml`, and `clippy.toml`.
 - The gate must run:
   - `cargo fmt --check`
   - `cargo clippy --all-targets --all-features -- -D warnings`
@@ -28,6 +29,7 @@
 
 - Keep command parsing, API transport, config loading, command execution, output envelopes, and drift checks in separate modules.
 - Command handlers should stay thin: parse args, read input, choose endpoint, and call the API client.
+- Keep functions small enough to pass the configured clippy complexity and argument thresholds.
 - Add helpers only when they name real CLI or API behavior; avoid thin wrappers created only to hide complexity.
 - New command families require contract tests and OpenAPI drift mapping.
 - Prefer explicit error types and stable JSON envelopes over ad hoc strings.

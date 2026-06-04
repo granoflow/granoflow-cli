@@ -27,6 +27,12 @@ cargo test --all-targets --all-features
 Pull requests should keep this gate green. Formatting drift, clippy warnings,
 and failing tests are treated as release blockers.
 
+The lint standards are checked from these files:
+
+- `Cargo.toml` `[lints]`: forbids unsafe code and denies the default clippy lint set.
+- `rustfmt.toml`: fixes the formatting profile.
+- `clippy.toml`: fixes complexity, argument-count, and type-complexity thresholds.
+
 ## Command Changes
 
 When adding or changing commands:

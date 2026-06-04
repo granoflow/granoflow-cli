@@ -73,6 +73,12 @@ cargo test --all-targets --all-features
 CI runs the same gate on pull requests and `main` pushes. Formatting drift,
 clippy warnings, and failing tests are treated as release blockers.
 
+Lint configuration lives in:
+
+- `Cargo.toml` `[lints]` for Rust and clippy lint levels.
+- `rustfmt.toml` for formatting policy.
+- `clippy.toml` for complexity and API-shape thresholds.
+
 ## Package And Sync
 
 Build the release binary and copy it to the parent Granoflow repo's stable
