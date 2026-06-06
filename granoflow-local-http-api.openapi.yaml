@@ -139,6 +139,11 @@ paths:
           application/json:
             schema:
               type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+                  description: Absolute local APKG file path.
       responses:
         "200":
           description: AI task validation result
@@ -169,6 +174,22 @@ paths:
           application/json:
             schema:
               type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+                  description: Absolute local APKG file path.
+                dryRunId:
+                  type: string
+                  description: Optional client dry-run correlation id.
+                skipCardsWithMissingMedia:
+                  type: boolean
+                  default: false
+                  description: Confirm the existing missing-media choice.
+                stripRemoteMedia:
+                  type: boolean
+                  default: false
+                  description: Remove remote media tokens before importing.
       responses:
         "200":
           description: AI task import or preview result
@@ -604,6 +625,147 @@ paths:
       tags: [Resources]
       summary: Delete review card
       operationId: deleteReviewCard
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-card-decks:
+    get:
+      tags: [Resources]
+      summary: List review card decks
+      operationId: listReviewCardDecks
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Create review card deck
+      operationId: createReviewCardDeck
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-card-decks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: Get review card deck
+      operationId: getReviewCardDeck
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    delete:
+      tags: [Resources]
+      summary: Delete empty user-managed review card deck
+      operationId: deleteReviewCardDeck
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-card-decks/{id}/cards:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Resources]
+      summary: List cards in a review card deck
+      operationId: listReviewCardDeckCards
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-card-decks/import/anki/dry-run:
+    post:
+      tags: [Resources]
+      summary: Dry-run Anki APKG import
+      operationId: dryRunAnkiDeckImport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-card-decks/import/anki/confirm:
+    post:
+      tags: [Resources]
+      summary: Confirm Anki APKG import
+      operationId: confirmAnkiDeckImport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-card-decks/{id}/export/anki/preflight:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Resources]
+      summary: Preflight Anki APKG export
+      operationId: preflightAnkiDeckExport
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-card-decks/{id}/export/anki:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Resources]
+      summary: Export review card deck as Anki APKG
+      operationId: exportAnkiDeck
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
       responses:
         "200":
           content:
