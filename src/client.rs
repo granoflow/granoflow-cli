@@ -35,6 +35,10 @@ impl ApiClient {
         self.send(reqwest::Method::PUT, path, Some(body)).await
     }
 
+    pub async fn delete(&self, path: &str) -> CliResult<Value> {
+        self.send(reqwest::Method::DELETE, path, None).await
+    }
+
     async fn send(
         &self,
         method: reqwest::Method,

@@ -56,6 +56,7 @@ async fn run_inner(cli: &Cli) -> CliResult<Value> {
         Some(Command::Task(task)) => run_task(&client, task).await,
         Some(Command::Project(project)) => run_project(&client, project).await,
         Some(Command::Review(review)) => run_review(&client, review).await,
+        Some(Command::Deck(deck)) => run_deck(&client, deck).await,
         Some(Command::AiAgent(ai_agent)) => run_ai_agent(&client, ai_agent).await,
     }
 }
@@ -152,6 +153,106 @@ async fn run_review(client: &ApiClient, review: &ReviewCommand) -> CliResult<Val
     }
 }
 
+async fn run_deck(client: &ApiClient, deck: &DeckCommand) -> CliResult<Value> {
+    match &deck.command {
+        DeckSubcommand::List => client.get("/v1/review-card-decks").await,
+        DeckSubcommand::Show(args) => {
+            client
+                .get(&format!("/v1/review-card-decks/{}", args.deck_id))
+                .await
+        }
+        DeckSubcommand::Create(args) => {
+            client
+                .post(
+                    "/v1/review-card-decks",
+                    json!({
+                        "name": args.name,
+                        "parentDeckId": args.parent,
+                    }),
+                )
+                .await
+        }
+        DeckSubcommand::Delete(args) => {
+            client
+                .delete(&format!("/v1/review-card-decks/{}", args.deck_id))
+                .await
+        }
+        DeckSubcommand::Cards(args) => {
+            client
+                .post(
+                    &format!("/v1/review-card-decks/{}/cards", args.deck_id),
+                    json!({
+                        "includeChildren": args.include_children,
+                        "archived": deck_cards_archived_filter(args),
+                    }),
+                )
+                .await
+        }
+        DeckSubcommand::Import(import) => run_deck_import(client, import).await,
+        DeckSubcommand::Export(export) => run_deck_export(client, export).await,
+    }
+}
+
+async fn run_deck_import(client: &ApiClient, import: &DeckImportCommand) -> CliResult<Value> {
+    match &import.command {
+        DeckImportSubcommand::Anki(args) => {
+            if args.dry_run {
+                return client
+                    .post(
+                        "/v1/review-card-decks/import/anki/dry-run",
+                        json!({"path": args.path}),
+                    )
+                    .await;
+            }
+            let Some(dry_run_id) = &args.confirm else {
+                return Err(CliError::Usage(
+                    "deck import anki requires --dry-run or --confirm <dry-run-id>".to_string(),
+                ));
+            };
+            client
+                .post(
+                    "/v1/review-card-decks/import/anki/confirm",
+                    json!({
+                        "path": args.path,
+                        "dryRunId": dry_run_id,
+                        "skipCardsWithMissingMedia": args.skip_cards_with_missing_media,
+                        "stripRemoteMedia": args.strip_remote_media,
+                    }),
+                )
+                .await
+        }
+    }
+}
+
+async fn run_deck_export(client: &ApiClient, export: &DeckExportCommand) -> CliResult<Value> {
+    match &export.command {
+        DeckExportSubcommand::Anki(args) => {
+            if args.preflight {
+                return client
+                    .post(
+                        &format!(
+                            "/v1/review-card-decks/{}/export/anki/preflight",
+                            args.deck_id
+                        ),
+                        json!({}),
+                    )
+                    .await;
+            }
+            let Some(output) = &args.output else {
+                return Err(CliError::Usage(
+                    "deck export anki requires --preflight or --output <path.apkg>".to_string(),
+                ));
+            };
+            client
+                .post(
+                    &format!("/v1/review-card-decks/{}/export/anki", args.deck_id),
+                    json!({"output": output}),
+                )
+                .await
+        }
+    }
+}
+
 async fn run_ai_agent(client: &ApiClient, ai_agent: &AiAgentCommand) -> CliResult<Value> {
     match &ai_agent.command {
         AiAgentSubcommand::Tools => client.get("/v1/ai-agent/tools").await,
@@ -208,6 +309,16 @@ fn read_json_input(path: &str) -> CliResult<Value> {
     };
     serde_json::from_str(&raw)
         .map_err(|error| CliError::Usage(format!("input must be valid JSON: {error}")))
+}
+
+fn deck_cards_archived_filter(args: &DeckCardsArgs) -> Option<bool> {
+    if args.archived {
+        Some(true)
+    } else if args.active {
+        Some(false)
+    } else {
+        None
+    }
 }
 
 fn human_value(value: Value) -> String {

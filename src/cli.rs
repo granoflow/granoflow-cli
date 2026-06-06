@@ -60,6 +60,7 @@ pub enum Command {
     Task(TaskCommand),
     Project(ProjectCommand),
     Review(ReviewCommand),
+    Deck(DeckCommand),
     #[command(name = "ai-agent")]
     AiAgent(AiAgentCommand),
 }
@@ -130,6 +131,91 @@ pub struct InputArgs {
 pub struct ReviewCommand {
     #[command(subcommand)]
     pub period: ReviewPeriod,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckCommand {
+    #[command(subcommand)]
+    pub command: DeckSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DeckSubcommand {
+    List,
+    Show(DeckIdArg),
+    Create(DeckCreateArgs),
+    Delete(DeckIdArg),
+    Cards(DeckCardsArgs),
+    Import(DeckImportCommand),
+    Export(DeckExportCommand),
+}
+
+#[derive(Debug, Args)]
+pub struct DeckIdArg {
+    pub deck_id: String,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckCreateArgs {
+    #[arg(long)]
+    pub name: String,
+    #[arg(long)]
+    pub parent: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckCardsArgs {
+    pub deck_id: String,
+    #[arg(long)]
+    pub include_children: bool,
+    #[arg(long, conflicts_with = "active")]
+    pub archived: bool,
+    #[arg(long, conflicts_with = "archived")]
+    pub active: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckImportCommand {
+    #[command(subcommand)]
+    pub command: DeckImportSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DeckImportSubcommand {
+    Anki(DeckImportAnkiArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct DeckImportAnkiArgs {
+    pub path: String,
+    #[arg(long, conflicts_with = "confirm")]
+    pub dry_run: bool,
+    #[arg(long, conflicts_with = "dry_run")]
+    pub confirm: Option<String>,
+    #[arg(long)]
+    pub skip_cards_with_missing_media: bool,
+    #[arg(long)]
+    pub strip_remote_media: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckExportCommand {
+    #[command(subcommand)]
+    pub command: DeckExportSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DeckExportSubcommand {
+    Anki(DeckExportAnkiArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct DeckExportAnkiArgs {
+    pub deck_id: String,
+    #[arg(long)]
+    pub output: Option<String>,
+    #[arg(long)]
+    pub preflight: bool,
 }
 
 #[derive(Debug, Subcommand)]
