@@ -6,7 +6,7 @@ use predicates::prelude::*;
 use serde_json::Value;
 use tempfile::NamedTempFile;
 use wiremock::{
-    matchers::{header, method, path},
+    matchers::{body_json, header, method, path},
     Mock, MockServer, ResponseTemplate,
 };
 
@@ -153,6 +153,126 @@ async fn health_calls_configured_api_base_url() {
         .assert()
         .success()
         .stdout(predicate::str::contains("\"status\": \"ok\""));
+}
+
+#[tokio::test]
+async fn deck_list_calls_review_card_decks_endpoint() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/v1/review-card-decks"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"entity_type": "review-card-deck", "items": []}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args(["--json", "--api-base-url", &server.uri(), "deck", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("review-card-deck"));
+}
+
+#[tokio::test]
+async fn deck_import_anki_dry_run_sends_path_to_api() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/review-card-decks/import/anki/dry-run"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"dryRun": true}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "deck",
+            "import",
+            "anki",
+            "/tmp/sample.apkg",
+            "--dry-run",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"dryRun\": true"));
+}
+
+#[tokio::test]
+async fn deck_import_anki_confirm_sends_remote_media_choice_to_api() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/review-card-decks/import/anki/confirm"))
+        .and(body_json(serde_json::json!({
+            "path": "/tmp/sample.apkg",
+            "dryRunId": "dry-run-1",
+            "skipCardsWithMissingMedia": true,
+            "stripRemoteMedia": true
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"imported": true}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "deck",
+            "import",
+            "anki",
+            "/tmp/sample.apkg",
+            "--confirm",
+            "dry-run-1",
+            "--skip-cards-with-missing-media",
+            "--strip-remote-media",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"imported\": true"));
+}
+
+#[tokio::test]
+async fn deck_export_anki_preflight_calls_preflight_endpoint() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/review-card-decks/deck-1/export/anki/preflight"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"preflight": "blocked"}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "deck",
+            "export",
+            "anki",
+            "deck-1",
+            "--preflight",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"preflight\": \"blocked\""));
 }
 
 #[tokio::test]
