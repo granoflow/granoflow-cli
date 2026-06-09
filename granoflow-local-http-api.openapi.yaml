@@ -734,44 +734,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CommandResult"
-  /v1/review-card-decks/{id}/export/anki/preflight:
-    parameters:
-      - $ref: "#/components/parameters/ResourceId"
-    post:
-      tags: [Resources]
-      summary: Preflight Anki APKG export
-      operationId: preflightAnkiDeckExport
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CommandResult"
-  /v1/review-card-decks/{id}/export/anki:
-    parameters:
-      - $ref: "#/components/parameters/ResourceId"
-    post:
-      tags: [Resources]
-      summary: Export review card deck as Anki APKG
-      operationId: exportAnkiDeck
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CommandResult"
   /v1/review-task-card-links:
     get:
       tags: [Resources]
