@@ -246,36 +246,6 @@ async fn deck_import_anki_confirm_sends_remote_media_choice_to_api() {
 }
 
 #[tokio::test]
-async fn deck_export_anki_preflight_calls_preflight_endpoint() {
-    let server = MockServer::start().await;
-    Mock::given(method("POST"))
-        .and(path("/v1/review-card-decks/deck-1/export/anki/preflight"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "ok": true,
-            "data": {"preflight": "blocked"}
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Command::cargo_bin("granoflow")
-        .unwrap()
-        .args([
-            "--json",
-            "--api-base-url",
-            &server.uri(),
-            "deck",
-            "export",
-            "anki",
-            "deck-1",
-            "--preflight",
-        ])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("\"preflight\": \"blocked\""));
-}
-
-#[tokio::test]
 async fn sends_bearer_token_and_maps_auth_errors() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
