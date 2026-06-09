@@ -147,7 +147,6 @@ pub enum DeckSubcommand {
     Delete(DeckIdArg),
     Cards(DeckCardsArgs),
     Import(DeckImportCommand),
-    Export(DeckExportCommand),
 }
 
 #[derive(Debug, Args)]
@@ -196,26 +195,6 @@ pub struct DeckImportAnkiArgs {
     pub skip_cards_with_missing_media: bool,
     #[arg(long)]
     pub strip_remote_media: bool,
-}
-
-#[derive(Debug, Args)]
-pub struct DeckExportCommand {
-    #[command(subcommand)]
-    pub command: DeckExportSubcommand,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum DeckExportSubcommand {
-    Anki(DeckExportAnkiArgs),
-}
-
-#[derive(Debug, Args)]
-pub struct DeckExportAnkiArgs {
-    pub deck_id: String,
-    #[arg(long)]
-    pub output: Option<String>,
-    #[arg(long)]
-    pub preflight: bool,
 }
 
 #[derive(Debug, Subcommand)]

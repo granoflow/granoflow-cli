@@ -49,8 +49,6 @@ pub fn json_help(lang: &Lang, command: &[String]) -> Value {
             "deck cards <deck-id> [--include-children] [--archived|--active]",
             "deck import anki <path.apkg> --dry-run",
             "deck import anki <path.apkg> --confirm <dry-run-id> [--skip-cards-with-missing-media] [--strip-remote-media]",
-            "deck export anki <deck-id> --preflight",
-            "deck export anki <deck-id> --output <path.apkg>",
             "ai-agent tools",
             "ai-agent task export --id <task-id>",
             "ai-agent task validate --input <file|->",

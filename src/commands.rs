@@ -189,7 +189,6 @@ async fn run_deck(client: &ApiClient, deck: &DeckCommand) -> CliResult<Value> {
                 .await
         }
         DeckSubcommand::Import(import) => run_deck_import(client, import).await,
-        DeckSubcommand::Export(export) => run_deck_export(client, export).await,
     }
 }
 
@@ -218,35 +217,6 @@ async fn run_deck_import(client: &ApiClient, import: &DeckImportCommand) -> CliR
                         "skipCardsWithMissingMedia": args.skip_cards_with_missing_media,
                         "stripRemoteMedia": args.strip_remote_media,
                     }),
-                )
-                .await
-        }
-    }
-}
-
-async fn run_deck_export(client: &ApiClient, export: &DeckExportCommand) -> CliResult<Value> {
-    match &export.command {
-        DeckExportSubcommand::Anki(args) => {
-            if args.preflight {
-                return client
-                    .post(
-                        &format!(
-                            "/v1/review-card-decks/{}/export/anki/preflight",
-                            args.deck_id
-                        ),
-                        json!({}),
-                    )
-                    .await;
-            }
-            let Some(output) = &args.output else {
-                return Err(CliError::Usage(
-                    "deck export anki requires --preflight or --output <path.apkg>".to_string(),
-                ));
-            };
-            client
-                .post(
-                    &format!("/v1/review-card-decks/{}/export/anki", args.deck_id),
-                    json!({"output": output}),
                 )
                 .await
         }
