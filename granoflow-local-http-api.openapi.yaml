@@ -301,6 +301,76 @@ paths:
           $ref: "#/components/responses/Error"
         "423":
           $ref: "#/components/responses/Error"
+  /v1/tasks/{id}/review-card-drafts/validate:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Commands]
+      summary: Validate AI review-card draft JSON for a task
+      operationId: validateTaskReviewCardDraft
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Review-card draft validation result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{id}/review-card-drafts/import:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    post:
+      tags: [Commands]
+      summary: Preview or import AI review-card draft JSON for a task
+      operationId: importTaskReviewCardDraft
+      parameters:
+        - name: dryRun
+          in: query
+          required: false
+          schema:
+            type: boolean
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Review-card draft import or preview result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{taskId}/review-cards/{cardId}/unlink:
+    post:
+      tags: [Resources]
+      summary: Unlink a review card from the current task
+      operationId: unlinkTaskReviewCard
+      responses:
+        "200":
+          description: Unlink result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{taskId}/review-notes/{noteId}/unlink:
+    post:
+      tags: [Resources]
+      summary: Unlink a review note from the current task
+      operationId: unlinkTaskReviewNote
+      responses:
+        "200":
+          description: Unlink result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
   /v1/projects:
     get:
       tags: [Resources]
@@ -625,6 +695,39 @@ paths:
       tags: [Resources]
       summary: Delete review card
       operationId: deleteReviewCard
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-cards/{cardId}/archive:
+    post:
+      tags: [Resources]
+      summary: Archive review card
+      operationId: archiveReviewCard
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-cards/{cardId}/unarchive:
+    post:
+      tags: [Resources]
+      summary: Unarchive review card
+      operationId: unarchiveReviewCard
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-cards/{cardId}/trash:
+    post:
+      tags: [Resources]
+      summary: Move review card to trash
+      operationId: trashReviewCard
       responses:
         "200":
           content:
