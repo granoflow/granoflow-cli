@@ -54,6 +54,14 @@ granoflow ai-agent task export --id <task-id> --json
 granoflow ai-agent task validate --input <file|-> --json
 granoflow ai-agent task import --input <file|-> --dry-run --json
 granoflow ai-agent task import --input <file|-> --json
+granoflow ai-agent task review-card-drafts validate --task-id <task-id> --input <file|-> --json
+granoflow ai-agent task review-card-drafts import --task-id <task-id> --input <file|-> --dry-run --json
+granoflow ai-agent task review-card-drafts import --task-id <task-id> --input <file|-> --json
+granoflow card archive <card-id> --json
+granoflow card unarchive <card-id> --json
+granoflow card trash <card-id> --json
+granoflow card unlink --task-id <task-id> --card-id <card-id> --json
+granoflow card unlink-note --task-id <task-id> --note-id <note-id> --json
 ```
 
 ## Verification

@@ -9,6 +9,7 @@
 ## Hard Rules
 
 - Do not change the public CLI command surface unless the user explicitly asks.
+- Before changing public CLI command behavior, write at least a `76-final` small-change plan in the parent Granoflow workflow; upgrade to a 73 plan when the change needs staged execution, a validation matrix, rollback planning, new command families, or boundary changes.
 - Do not add direct SQLite, Drift, App build, App run, screenshot, restore, report, or scenario orchestration logic.
 - Do not print API tokens or config secrets in logs, tests, snapshots, or docs.
 - Do not weaken tests, remove OpenAPI drift checks, or make quality gates non-blocking to get a green result.
