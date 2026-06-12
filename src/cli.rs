@@ -61,6 +61,7 @@ pub enum Command {
     Project(ProjectCommand),
     Review(ReviewCommand),
     Deck(DeckCommand),
+    Card(CardCommand),
     #[command(name = "ai-agent")]
     AiAgent(AiAgentCommand),
 }
@@ -197,6 +198,43 @@ pub struct DeckImportAnkiArgs {
     pub strip_remote_media: bool,
 }
 
+#[derive(Debug, Args)]
+pub struct CardCommand {
+    #[command(subcommand)]
+    pub command: CardSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum CardSubcommand {
+    Archive(CardIdArg),
+    Unarchive(CardIdArg),
+    Trash(CardIdArg),
+    Unlink(TaskCardArg),
+    #[command(name = "unlink-note")]
+    UnlinkNote(TaskNoteArg),
+}
+
+#[derive(Debug, Args)]
+pub struct CardIdArg {
+    pub card_id: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskCardArg {
+    #[arg(long)]
+    pub task_id: String,
+    #[arg(long)]
+    pub card_id: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TaskNoteArg {
+    #[arg(long)]
+    pub task_id: String,
+    #[arg(long)]
+    pub note_id: String,
+}
+
 #[derive(Debug, Subcommand)]
 pub enum ReviewPeriod {
     Day(ReviewDayCommand),
@@ -295,6 +333,8 @@ pub enum AiAgentTaskSubcommand {
     Export(AiExportArgs),
     Validate(AiInputArgs),
     Import(AiInputArgs),
+    #[command(name = "review-card-drafts")]
+    ReviewCardDrafts(AiReviewCardDraftCommand),
 }
 
 #[derive(Debug, Args)]
@@ -305,6 +345,28 @@ pub struct AiExportArgs {
 
 #[derive(Debug, Args)]
 pub struct AiInputArgs {
+    #[arg(long)]
+    pub input: String,
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct AiReviewCardDraftCommand {
+    #[command(subcommand)]
+    pub command: AiReviewCardDraftSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AiReviewCardDraftSubcommand {
+    Validate(AiTaskInputArgs),
+    Import(AiTaskInputArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct AiTaskInputArgs {
+    #[arg(long)]
+    pub task_id: String,
     #[arg(long)]
     pub input: String,
     #[arg(long)]

@@ -57,6 +57,7 @@ async fn run_inner(cli: &Cli) -> CliResult<Value> {
         Some(Command::Project(project)) => run_project(&client, project).await,
         Some(Command::Review(review)) => run_review(&client, review).await,
         Some(Command::Deck(deck)) => run_deck(&client, deck).await,
+        Some(Command::Card(card)) => run_card(&client, card).await,
         Some(Command::AiAgent(ai_agent)) => run_ai_agent(&client, ai_agent).await,
     }
 }
@@ -223,6 +224,57 @@ async fn run_deck_import(client: &ApiClient, import: &DeckImportCommand) -> CliR
     }
 }
 
+async fn run_card(client: &ApiClient, card: &CardCommand) -> CliResult<Value> {
+    match &card.command {
+        CardSubcommand::Archive(args) => {
+            client
+                .post(
+                    &format!("/v1/review-cards/{}/archive", args.card_id),
+                    json!({}),
+                )
+                .await
+        }
+        CardSubcommand::Unarchive(args) => {
+            client
+                .post(
+                    &format!("/v1/review-cards/{}/unarchive", args.card_id),
+                    json!({}),
+                )
+                .await
+        }
+        CardSubcommand::Trash(args) => {
+            client
+                .post(
+                    &format!("/v1/review-cards/{}/trash", args.card_id),
+                    json!({}),
+                )
+                .await
+        }
+        CardSubcommand::Unlink(args) => {
+            client
+                .post(
+                    &format!(
+                        "/v1/tasks/{}/review-cards/{}/unlink",
+                        args.task_id, args.card_id
+                    ),
+                    json!({}),
+                )
+                .await
+        }
+        CardSubcommand::UnlinkNote(args) => {
+            client
+                .post(
+                    &format!(
+                        "/v1/tasks/{}/review-notes/{}/unlink",
+                        args.task_id, args.note_id
+                    ),
+                    json!({}),
+                )
+                .await
+        }
+    }
+}
+
 async fn run_ai_agent(client: &ApiClient, ai_agent: &AiAgentCommand) -> CliResult<Value> {
     match &ai_agent.command {
         AiAgentSubcommand::Tools => client.get("/v1/ai-agent/tools").await,
@@ -245,6 +297,27 @@ async fn run_ai_agent(client: &ApiClient, ai_agent: &AiAgentCommand) -> CliResul
                 };
                 client.post(path, read_json_input(&args.input)?).await
             }
+            AiAgentTaskSubcommand::ReviewCardDrafts(command) => match &command.command {
+                AiReviewCardDraftSubcommand::Validate(args) => {
+                    client
+                        .post(
+                            &format!("/v1/tasks/{}/review-card-drafts/validate", args.task_id),
+                            read_json_input(&args.input)?,
+                        )
+                        .await
+                }
+                AiReviewCardDraftSubcommand::Import(args) => {
+                    let path = if args.dry_run {
+                        format!(
+                            "/v1/tasks/{}/review-card-drafts/import?dryRun=true",
+                            args.task_id
+                        )
+                    } else {
+                        format!("/v1/tasks/{}/review-card-drafts/import", args.task_id)
+                    };
+                    client.post(&path, read_json_input(&args.input)?).await
+                }
+            },
         },
     }
 }
