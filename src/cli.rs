@@ -62,6 +62,7 @@ pub enum Command {
     Review(ReviewCommand),
     Deck(DeckCommand),
     Card(CardCommand),
+    Backup(BackupCommand),
     #[command(name = "ai-agent")]
     AiAgent(AiAgentCommand),
 }
@@ -202,6 +203,30 @@ pub struct DeckImportAnkiArgs {
 pub struct CardCommand {
     #[command(subcommand)]
     pub command: CardSubcommand,
+}
+
+#[derive(Debug, Args)]
+pub struct BackupCommand {
+    #[command(subcommand)]
+    pub command: BackupSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum BackupSubcommand {
+    Decrypt(BackupConvertArgs),
+    Encrypt(BackupConvertArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct BackupConvertArgs {
+    #[arg(long)]
+    pub input: String,
+    #[arg(long)]
+    pub output: String,
+    #[arg(long, conflicts_with = "secret_file")]
+    pub secret_env: Option<String>,
+    #[arg(long, conflicts_with = "secret_env")]
+    pub secret_file: Option<String>,
 }
 
 #[derive(Debug, Subcommand)]

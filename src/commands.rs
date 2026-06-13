@@ -4,6 +4,7 @@ use clap::Parser;
 use serde_json::{json, Value};
 
 use crate::{
+    backup,
     cli::*,
     client::{request_preview, ApiClient},
     config::RuntimeConfig,
@@ -36,6 +37,9 @@ pub async fn run() -> anyhow::Result<i32> {
 }
 
 async fn run_inner(cli: &Cli) -> CliResult<Value> {
+    if let Some(Command::Backup(backup)) = &cli.command {
+        return backup::run_backup(backup);
+    }
     let config = RuntimeConfig::load(cli)?;
     let client = ApiClient::new(config.clone());
     match &cli.command {
@@ -58,6 +62,7 @@ async fn run_inner(cli: &Cli) -> CliResult<Value> {
         Some(Command::Review(review)) => run_review(&client, review).await,
         Some(Command::Deck(deck)) => run_deck(&client, deck).await,
         Some(Command::Card(card)) => run_card(&client, card).await,
+        Some(Command::Backup(_)) => unreachable!("backup is handled before config loading"),
         Some(Command::AiAgent(ai_agent)) => run_ai_agent(&client, ai_agent).await,
     }
 }

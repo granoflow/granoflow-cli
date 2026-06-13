@@ -49,6 +49,8 @@ pub fn json_help(lang: &Lang, command: &[String]) -> Value {
             "deck cards <deck-id> [--include-children] [--archived|--active]",
             "deck import anki <path.apkg> --dry-run",
             "deck import anki <path.apkg> --confirm <dry-run-id> [--skip-cards-with-missing-media] [--strip-remote-media]",
+            "backup decrypt --input <encrypted.flow.grano> --output <plaintext.flow.grano> --secret-env <ENV>",
+            "backup encrypt --input <plaintext.flow.grano> --output <encrypted.flow.grano> --secret-file <path>",
             "ai-agent tools",
             "ai-agent task export --id <task-id>",
             "ai-agent task validate --input <file|->",
