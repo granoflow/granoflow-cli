@@ -62,7 +62,16 @@ granoflow card unarchive <card-id> --json
 granoflow card trash <card-id> --json
 granoflow card unlink --task-id <task-id> --card-id <card-id> --json
 granoflow card unlink-note --task-id <task-id> --note-id <note-id> --json
+granoflow backup decrypt --input <encrypted.flow.grano> --output <plaintext.flow.grano> --secret-env <ENV> --json
+granoflow backup encrypt --input <plaintext.flow.grano> --output <encrypted.flow.grano> --secret-file <path> --json
 ```
+
+`backup decrypt` and `backup encrypt` are offline package conversion utilities.
+They run before API configuration is loaded and do not call the App or Local
+HTTP API. The secret must come from exactly one of `--secret-env` or
+`--secret-file`; JSON and human output never include the secret. Plaintext
+packages intentionally remove the backup keyring/envelope and include a privacy
+warning because losing that file exposes private records.
 
 ## Verification
 
