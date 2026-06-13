@@ -4,11 +4,14 @@ use granoflow::openapi_drift::{
 };
 use predicates::prelude::*;
 use serde_json::Value;
-use tempfile::NamedTempFile;
+use std::io::{Read, Write};
+use std::path::Path;
+use tempfile::{tempdir, NamedTempFile};
 use wiremock::{
     matchers::{body_json, header, method, path},
     Mock, MockServer, ResponseTemplate,
 };
+use zip::{write::SimpleFileOptions, ZipArchive, ZipWriter};
 
 #[test]
 fn help_json_reports_language_fallback_and_known_paths() {
@@ -132,6 +135,160 @@ fn reads_json_input_from_stdin() {
         .assert()
         .success()
         .stdout(predicate::str::contains("\"title\": \"From stdin\""));
+}
+
+#[test]
+fn backup_encrypt_decrypt_is_offline_and_redacts_secret() {
+    let temp = tempdir().unwrap();
+    let plaintext = temp.path().join("plain.flow.grano");
+    let encrypted = temp.path().join("encrypted.flow.grano");
+    let decrypted = temp.path().join("decrypted.flow.grano");
+    let secret_file = temp.path().join("secret.txt");
+    let secret = "restore-key-should-not-appear";
+    std::fs::write(&secret_file, secret).unwrap();
+    write_plaintext_backup(&plaintext, "Original").unwrap();
+
+    let encrypt_output = Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "backup",
+            "encrypt",
+            "--input",
+            plaintext.to_str().unwrap(),
+            "--output",
+            encrypted.to_str().unwrap(),
+            "--secret-file",
+            secret_file.to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let encrypt_envelope: Value = serde_json::from_slice(&encrypt_output).unwrap();
+    assert_eq!(encrypt_envelope["data"]["packageKind"], "encrypted");
+    assert!(!String::from_utf8_lossy(&encrypt_output).contains(secret));
+
+    let decrypt_output = Command::cargo_bin("granoflow")
+        .unwrap()
+        .env("GRANOFLOW_TEST_BACKUP_SECRET", secret)
+        .args([
+            "--json",
+            "--config",
+            "/path/that/must/not/be/read.toml",
+            "backup",
+            "decrypt",
+            "--input",
+            encrypted.to_str().unwrap(),
+            "--output",
+            decrypted.to_str().unwrap(),
+            "--secret-env",
+            "GRANOFLOW_TEST_BACKUP_SECRET",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let decrypt_envelope: Value = serde_json::from_slice(&decrypt_output).unwrap();
+    assert_eq!(decrypt_envelope["data"]["packageKind"], "plaintext");
+    assert_eq!(decrypt_envelope["data"]["secretSource"], "env");
+    assert!(!String::from_utf8_lossy(&decrypt_output).contains(secret));
+
+    let manifest = read_zip_json(&decrypted, "manifest.json").unwrap();
+    assert_eq!(manifest["format_version"], 3);
+    assert_eq!(manifest["package_kind"], "plaintext");
+    assert!(manifest.get("keyring").is_none());
+    assert!(manifest["privacy_warning"]
+        .as_str()
+        .unwrap()
+        .contains("expose private records"));
+    let records = read_zip_string(&decrypted, "records/tasks.ndjson").unwrap();
+    assert!(records.contains("Original"));
+    assert!(!records.contains("\"payload\""));
+}
+
+#[test]
+fn backup_decrypt_rejects_old_backup_versions() {
+    let temp = tempdir().unwrap();
+    let old_package = temp.path().join("old.flow.grano");
+    let output = temp.path().join("out.flow.grano");
+    let secret_file = temp.path().join("secret.txt");
+    std::fs::write(&secret_file, "restore-key").unwrap();
+    write_plaintext_backup_with_version(&old_package, "Old", 2).unwrap();
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "backup",
+            "decrypt",
+            "--input",
+            old_package.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+            "--secret-file",
+            secret_file.to_str().unwrap(),
+        ])
+        .assert()
+        .failure()
+        .stdout(predicate::str::contains(
+            "unsupported backup format_version 2",
+        ));
+}
+
+fn write_plaintext_backup(path: &Path, title: &str) -> std::io::Result<()> {
+    write_plaintext_backup_with_version(path, title, 3)
+}
+
+fn write_plaintext_backup_with_version(
+    path: &Path,
+    title: &str,
+    format_version: i64,
+) -> std::io::Result<()> {
+    let file = std::fs::File::create(path)?;
+    let mut zip = ZipWriter::new(file);
+    let options = SimpleFileOptions::default();
+    let manifest = serde_json::json!({
+        "format_version": format_version,
+        "package_kind": "plaintext",
+        "created_at_ms": 1,
+        "app_version": "test",
+        "library_id": "test-library",
+        "tables": [
+            {"name": "tasks", "path": "records/tasks.ndjson", "count": 1}
+        ],
+        "attachments": {
+            "images_root": "attachments/images",
+            "pdfs_root": "attachments/pdfs",
+            "files_root": "attachments/files"
+        }
+    });
+    zip.start_file("manifest.json", options)?;
+    zip.write_all(serde_json::to_string(&manifest).unwrap().as_bytes())?;
+    zip.start_file("records/tasks.ndjson", options)?;
+    writeln!(
+        zip,
+        "{}",
+        serde_json::json!({"id": "task-1", "title": title})
+    )?;
+    zip.finish()?;
+    Ok(())
+}
+
+fn read_zip_json(path: &Path, entry_name: &str) -> Result<Value, Box<dyn std::error::Error>> {
+    let raw = read_zip_string(path, entry_name)?;
+    Ok(serde_json::from_str(&raw)?)
+}
+
+fn read_zip_string(path: &Path, entry_name: &str) -> Result<String, Box<dyn std::error::Error>> {
+    let file = std::fs::File::open(path)?;
+    let mut archive = ZipArchive::new(file)?;
+    let mut entry = archive.by_name(entry_name)?;
+    let mut raw = String::new();
+    entry.read_to_string(&mut raw)?;
+    Ok(raw)
 }
 
 #[tokio::test]
