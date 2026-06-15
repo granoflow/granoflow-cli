@@ -358,8 +358,6 @@ pub enum AiAgentTaskSubcommand {
     Export(AiExportArgs),
     Validate(AiInputArgs),
     Import(AiInputArgs),
-    #[command(name = "review-card-drafts")]
-    ReviewCardDrafts(AiReviewCardDraftCommand),
 }
 
 #[derive(Debug, Args)]
@@ -374,18 +372,6 @@ pub struct AiInputArgs {
     pub input: String,
     #[arg(long)]
     pub dry_run: bool,
-}
-
-#[derive(Debug, Args)]
-pub struct AiReviewCardDraftCommand {
-    #[command(subcommand)]
-    pub command: AiReviewCardDraftSubcommand,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum AiReviewCardDraftSubcommand {
-    Validate(AiTaskInputArgs),
-    Import(AiTaskInputArgs),
 }
 
 #[derive(Debug, Args)]

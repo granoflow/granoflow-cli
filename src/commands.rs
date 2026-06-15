@@ -302,27 +302,6 @@ async fn run_ai_agent(client: &ApiClient, ai_agent: &AiAgentCommand) -> CliResul
                 };
                 client.post(path, read_json_input(&args.input)?).await
             }
-            AiAgentTaskSubcommand::ReviewCardDrafts(command) => match &command.command {
-                AiReviewCardDraftSubcommand::Validate(args) => {
-                    client
-                        .post(
-                            &format!("/v1/tasks/{}/review-card-drafts/validate", args.task_id),
-                            read_json_input(&args.input)?,
-                        )
-                        .await
-                }
-                AiReviewCardDraftSubcommand::Import(args) => {
-                    let path = if args.dry_run {
-                        format!(
-                            "/v1/tasks/{}/review-card-drafts/import?dryRun=true",
-                            args.task_id
-                        )
-                    } else {
-                        format!("/v1/tasks/{}/review-card-drafts/import", args.task_id)
-                    };
-                    client.post(&path, read_json_input(&args.input)?).await
-                }
-            },
         },
     }
 }
