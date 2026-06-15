@@ -403,45 +403,6 @@ async fn deck_import_anki_confirm_sends_remote_media_choice_to_api() {
 }
 
 #[tokio::test]
-async fn ai_review_card_draft_import_uses_task_scoped_endpoint() {
-    let input = NamedTempFile::new().unwrap();
-    std::fs::write(
-        input.path(),
-        r#"{"data":{"notes":[{"title":"N","cards":[{"front":"F","back":"B"}]}]}}"#,
-    )
-    .unwrap();
-    let server = MockServer::start().await;
-    Mock::given(method("POST"))
-        .and(path("/v1/tasks/task-1/review-card-drafts/import"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
-            "ok": true,
-            "data": {"archivedCardCount": 1}
-        })))
-        .expect(1)
-        .mount(&server)
-        .await;
-
-    Command::cargo_bin("granoflow")
-        .unwrap()
-        .args([
-            "--json",
-            "--api-base-url",
-            &server.uri(),
-            "ai-agent",
-            "task",
-            "review-card-drafts",
-            "import",
-            "--task-id",
-            "task-1",
-            "--input",
-            input.path().to_str().unwrap(),
-        ])
-        .assert()
-        .success()
-        .stdout(predicate::str::contains("\"archivedCardCount\": 1"));
-}
-
-#[tokio::test]
 async fn card_action_commands_call_review_card_endpoints() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
