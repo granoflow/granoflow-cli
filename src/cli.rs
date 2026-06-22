@@ -148,7 +148,7 @@ pub enum DeckSubcommand {
     Create(DeckCreateArgs),
     Delete(DeckIdArg),
     Cards(DeckCardsArgs),
-    Import(DeckImportCommand),
+    Package(DeckPackageCommand),
 }
 
 #[derive(Debug, Args)]
@@ -176,27 +176,44 @@ pub struct DeckCardsArgs {
 }
 
 #[derive(Debug, Args)]
-pub struct DeckImportCommand {
+pub struct DeckPackageCommand {
     #[command(subcommand)]
-    pub command: DeckImportSubcommand,
+    pub command: DeckPackageSubcommand,
 }
 
 #[derive(Debug, Subcommand)]
-pub enum DeckImportSubcommand {
-    Anki(DeckImportAnkiArgs),
+pub enum DeckPackageSubcommand {
+    Preview(DeckPackagePathArgs),
+    Import(DeckPackageImportArgs),
+    Export(DeckPackageExportArgs),
 }
 
 #[derive(Debug, Args)]
-pub struct DeckImportAnkiArgs {
+pub struct DeckPackagePathArgs {
     pub path: String,
-    #[arg(long, conflicts_with = "confirm")]
-    pub dry_run: bool,
-    #[arg(long, conflicts_with = "dry_run")]
-    pub confirm: Option<String>,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckPackageImportArgs {
+    pub path: String,
     #[arg(long)]
-    pub skip_cards_with_missing_media: bool,
+    pub import_study_history: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckPackageExportArgs {
     #[arg(long)]
-    pub strip_remote_media: bool,
+    pub deck_id: String,
+    #[arg(long)]
+    pub out_path: String,
+    #[arg(long, default_value = "")]
+    pub author: String,
+    #[arg(long, default_value = "")]
+    pub contact: String,
+    #[arg(long, default_value = "1.0")]
+    pub version: String,
+    #[arg(long)]
+    pub include_study_history: bool,
 }
 
 #[derive(Debug, Args)]

@@ -194,34 +194,42 @@ async fn run_deck(client: &ApiClient, deck: &DeckCommand) -> CliResult<Value> {
                 )
                 .await
         }
-        DeckSubcommand::Import(import) => run_deck_import(client, import).await,
+        DeckSubcommand::Package(package) => run_deck_package(client, package).await,
     }
 }
 
-async fn run_deck_import(client: &ApiClient, import: &DeckImportCommand) -> CliResult<Value> {
-    match &import.command {
-        DeckImportSubcommand::Anki(args) => {
-            if args.dry_run {
-                return client
-                    .post(
-                        "/v1/review-card-decks/import/anki/dry-run",
-                        json!({"path": args.path}),
-                    )
-                    .await;
-            }
-            let Some(dry_run_id) = &args.confirm else {
-                return Err(CliError::Usage(
-                    "deck import anki requires --dry-run or --confirm <dry-run-id>".to_string(),
-                ));
-            };
+async fn run_deck_package(client: &ApiClient, package: &DeckPackageCommand) -> CliResult<Value> {
+    match &package.command {
+        DeckPackageSubcommand::Preview(args) => {
             client
                 .post(
-                    "/v1/review-card-decks/import/anki/confirm",
+                    "/v1/review-card-decks/import/package/preview",
+                    json!({"path": args.path}),
+                )
+                .await
+        }
+        DeckPackageSubcommand::Import(args) => {
+            client
+                .post(
+                    "/v1/review-card-decks/import/package/confirm",
                     json!({
                         "path": args.path,
-                        "dryRunId": dry_run_id,
-                        "skipCardsWithMissingMedia": args.skip_cards_with_missing_media,
-                        "stripRemoteMedia": args.strip_remote_media,
+                        "importStudyHistory": args.import_study_history,
+                    }),
+                )
+                .await
+        }
+        DeckPackageSubcommand::Export(args) => {
+            client
+                .post(
+                    "/v1/review-card-decks/export/package",
+                    json!({
+                        "deckId": args.deck_id,
+                        "outPath": args.out_path,
+                        "author": args.author,
+                        "contact": args.contact,
+                        "version": args.version,
+                        "includeStudyHistory": args.include_study_history,
                     }),
                 )
                 .await
