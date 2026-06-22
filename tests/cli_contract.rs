@@ -334,13 +334,16 @@ async fn deck_list_calls_review_card_decks_endpoint() {
 }
 
 #[tokio::test]
-async fn deck_import_anki_dry_run_sends_path_to_api() {
+async fn deck_package_preview_sends_path_to_api() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/review-card-decks/import/anki/dry-run"))
+        .and(path("/v1/review-card-decks/import/package/preview"))
+        .and(body_json(serde_json::json!({
+            "path": "/tmp/sample.deck.grano"
+        })))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "ok": true,
-            "data": {"dryRun": true}
+            "data": {"entity_type": "review-card-deck-package-import-preview"}
         })))
         .expect(1)
         .mount(&server)
@@ -353,26 +356,25 @@ async fn deck_import_anki_dry_run_sends_path_to_api() {
             "--api-base-url",
             &server.uri(),
             "deck",
-            "import",
-            "anki",
-            "/tmp/sample.apkg",
-            "--dry-run",
+            "package",
+            "preview",
+            "/tmp/sample.deck.grano",
         ])
         .assert()
         .success()
-        .stdout(predicate::str::contains("\"dryRun\": true"));
+        .stdout(predicate::str::contains(
+            "review-card-deck-package-import-preview",
+        ));
 }
 
 #[tokio::test]
-async fn deck_import_anki_confirm_sends_remote_media_choice_to_api() {
+async fn deck_package_import_sends_study_history_choice_to_api() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
-        .and(path("/v1/review-card-decks/import/anki/confirm"))
+        .and(path("/v1/review-card-decks/import/package/confirm"))
         .and(body_json(serde_json::json!({
-            "path": "/tmp/sample.apkg",
-            "dryRunId": "dry-run-1",
-            "skipCardsWithMissingMedia": true,
-            "stripRemoteMedia": true
+            "path": "/tmp/sample.deck.grano",
+            "importStudyHistory": true
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
             "ok": true,
@@ -389,17 +391,61 @@ async fn deck_import_anki_confirm_sends_remote_media_choice_to_api() {
             "--api-base-url",
             &server.uri(),
             "deck",
+            "package",
             "import",
-            "anki",
-            "/tmp/sample.apkg",
-            "--confirm",
-            "dry-run-1",
-            "--skip-cards-with-missing-media",
-            "--strip-remote-media",
+            "/tmp/sample.deck.grano",
+            "--import-study-history",
         ])
         .assert()
         .success()
         .stdout(predicate::str::contains("\"imported\": true"));
+}
+
+#[tokio::test]
+async fn deck_package_export_sends_output_config_to_api() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/review-card-decks/export/package"))
+        .and(body_json(serde_json::json!({
+            "deckId": "deck-1",
+            "outPath": "/tmp/out.deck.grano",
+            "author": "Will",
+            "contact": "will@example.com",
+            "version": "1.0",
+            "includeStudyHistory": true
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"exported": true}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "deck",
+            "package",
+            "export",
+            "--deck-id",
+            "deck-1",
+            "--out-path",
+            "/tmp/out.deck.grano",
+            "--author",
+            "Will",
+            "--contact",
+            "will@example.com",
+            "--version",
+            "1.0",
+            "--include-study-history",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"exported\": true"));
 }
 
 #[tokio::test]
