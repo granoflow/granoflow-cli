@@ -757,11 +757,11 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CommandResult"
-  /v1/review-card-decks/import/anki/dry-run:
+  /v1/review-card-decks/import/package/preview:
     post:
       tags: [Resources]
-      summary: Dry-run Anki APKG import
-      operationId: dryRunAnkiDeckImport
+      summary: Preview review card deck package import
+      operationId: previewReviewCardDeckPackageImport
       requestBody:
         required: true
         content:
@@ -774,11 +774,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CommandResult"
-  /v1/review-card-decks/import/anki/confirm:
+  /v1/review-card-decks/import/package/confirm:
     post:
       tags: [Resources]
-      summary: Confirm Anki APKG import
-      operationId: confirmAnkiDeckImport
+      summary: Confirm review card deck package import
+      operationId: confirmReviewCardDeckPackageImport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/review-card-decks/export/package:
+    post:
+      tags: [Resources]
+      summary: Export review card deck package
+      operationId: exportReviewCardDeckPackage
       requestBody:
         required: true
         content:
