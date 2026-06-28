@@ -53,10 +53,7 @@ async fn run_inner(cli: &Cli) -> CliResult<Value> {
         }
         Some(Command::Config) => Ok(config.redacted_json()),
         Some(Command::Health) => client.get("/v1/health").await,
-        Some(Command::Api(api)) => match api.command {
-            ApiSubcommand::Version => client.get("/v1/version").await,
-            ApiSubcommand::Capabilities => client.get("/v1/capabilities").await,
-        },
+        Some(Command::Api(api)) => run_api(&client, api).await,
         Some(Command::Task(task)) => run_task(&client, task).await,
         Some(Command::Project(project)) => run_project(&client, project).await,
         Some(Command::Review(review)) => run_review(&client, review).await,
@@ -64,6 +61,113 @@ async fn run_inner(cli: &Cli) -> CliResult<Value> {
         Some(Command::Card(card)) => run_card(&client, card).await,
         Some(Command::Backup(_)) => unreachable!("backup is handled before config loading"),
         Some(Command::AiAgent(ai_agent)) => run_ai_agent(&client, ai_agent).await,
+    }
+}
+
+async fn run_api(client: &ApiClient, api: &ApiCommand) -> CliResult<Value> {
+    match &api.command {
+        ApiSubcommand::Version => client.get("/v1/version").await,
+        ApiSubcommand::Capabilities => client.get("/v1/capabilities").await,
+        ApiSubcommand::Sync(sync) => run_api_sync(client, sync).await,
+        ApiSubcommand::Backup(backup) => run_api_backup(client, backup).await,
+        ApiSubcommand::Test(test) => run_api_test(client, test).await,
+    }
+}
+
+async fn run_api_sync(client: &ApiClient, sync: &ApiSyncCommand) -> CliResult<Value> {
+    match &sync.command {
+        ApiSyncSubcommand::Status => client.get("/v1/sync/status").await,
+        ApiSyncSubcommand::Push(args) => {
+            write_or_preview(client, "POST", "/v1/sync/push", json!({}), args.dry_run).await
+        }
+        ApiSyncSubcommand::Pull(args) => {
+            write_or_preview(client, "POST", "/v1/sync/pull", json!({}), args.dry_run).await
+        }
+    }
+}
+
+async fn run_api_backup(client: &ApiClient, backup: &ApiBackupCommand) -> CliResult<Value> {
+    match &backup.command {
+        ApiBackupSubcommand::Export(args) => {
+            write_or_preview(
+                client,
+                "POST",
+                "/v1/backup/exports",
+                json!({"outputPath": args.output}),
+                args.dry_run,
+            )
+            .await
+        }
+        ApiBackupSubcommand::Preview(args) => {
+            write_or_preview(
+                client,
+                "POST",
+                "/v1/backup/imports/preview",
+                json!({"inputPath": args.input}),
+                args.dry_run,
+            )
+            .await
+        }
+        ApiBackupSubcommand::Restore(args) => {
+            write_or_preview(
+                client,
+                "POST",
+                "/v1/backup/imports",
+                json!({
+                    "inputPath": args.input,
+                    "secretFile": args.secret_file,
+                    "allowMissingAttachments": args.allow_missing_attachments,
+                    "allowLargeAttachmentConversion": args.allow_large_attachment_conversion,
+                    "confirm": args.confirm,
+                }),
+                args.dry_run,
+            )
+            .await
+        }
+    }
+}
+
+async fn run_api_test(client: &ApiClient, test: &ApiTestCommand) -> CliResult<Value> {
+    match &test.command {
+        ApiTestSubcommand::Login(args) => {
+            write_or_preview(
+                client,
+                "POST",
+                "/v1/commands",
+                json!({
+                    "command": "test-login",
+                    "arguments": {"user": args.user},
+                }),
+                args.dry_run,
+            )
+            .await
+        }
+        ApiTestSubcommand::SeedSyncBackupCoverage(args) => {
+            write_or_preview(
+                client,
+                "POST",
+                "/v1/commands",
+                json!({
+                    "command": "test-seed-sync-backup-coverage",
+                    "arguments": {"run_id": args.run_id},
+                }),
+                args.dry_run,
+            )
+            .await
+        }
+        ApiTestSubcommand::AssertSyncBackupCoverage(args) => {
+            write_or_preview(
+                client,
+                "POST",
+                "/v1/commands",
+                json!({
+                    "command": "test-assert-sync-backup-coverage",
+                    "arguments": {"run_id": args.run_id},
+                }),
+                args.dry_run,
+            )
+            .await
+        }
     }
 }
 

@@ -2,9 +2,11 @@
 
 `granoflow` is a headless Rust client for the Granoflow Local HTTP API.
 It is not the old business CLI, does not write SQLite/Drift data directly,
-and does not run scenario, restore, report, login, screenshot, App run, or
-App build orchestration. Those responsibilities stay with `scripts/anz` and
-the running App service layer.
+and does not run scenario, report, screenshot, App run, or App build
+orchestration. App-hosted sync, backup export, backup restore, and
+integration-test login/seed hooks are exposed only as thin Local HTTP API
+client commands under `granoflow api ...`; the running App service layer owns
+the business logic.
 
 ## Run Locally
 
@@ -39,6 +41,15 @@ The default API base URL is `http://127.0.0.1:56789`.
 granoflow health --json
 granoflow api version --json
 granoflow api capabilities --json
+granoflow api sync status --json
+granoflow api sync push --json
+granoflow api sync pull --json
+granoflow api backup export --output <backup.flow.grano> --json
+granoflow api backup preview --input <backup.flow.grano> --json
+granoflow api backup restore --input <backup.flow.grano> --secret-file <path> --confirm --json
+granoflow api test login --user <test-user> --json
+granoflow api test seed-sync-backup-coverage --run-id <run-id> --json
+granoflow api test assert-sync-backup-coverage --run-id <run-id> --json
 granoflow task list --json
 granoflow task create --input <file|-> --json
 granoflow task complete --id <id> [--input <file|->] --json
@@ -72,6 +83,11 @@ HTTP API. The secret must come from exactly one of `--secret-env` or
 `--secret-file`; JSON and human output never include the secret. Plaintext
 packages intentionally remove the backup keyring/envelope and include a privacy
 warning because losing that file exposes private records.
+
+`api backup export`, `api backup preview`, and `api backup restore` are a
+different command surface: they call the running App's Local HTTP API and reuse
+the App backup/import services. They do not parse or mutate backup packages in
+the CLI process.
 
 ## Verification
 

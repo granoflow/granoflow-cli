@@ -84,6 +84,102 @@ pub struct ApiCommand {
 pub enum ApiSubcommand {
     Version,
     Capabilities,
+    Sync(ApiSyncCommand),
+    Backup(ApiBackupCommand),
+    Test(ApiTestCommand),
+}
+
+#[derive(Debug, Args)]
+pub struct ApiSyncCommand {
+    #[command(subcommand)]
+    pub command: ApiSyncSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ApiSyncSubcommand {
+    Status,
+    Push(ApiDryRunArgs),
+    Pull(ApiDryRunArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ApiBackupCommand {
+    #[command(subcommand)]
+    pub command: ApiBackupSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ApiBackupSubcommand {
+    Export(ApiBackupExportArgs),
+    Preview(ApiBackupInputArgs),
+    Restore(ApiBackupRestoreArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ApiBackupExportArgs {
+    #[arg(long)]
+    pub output: String,
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct ApiBackupInputArgs {
+    #[arg(long)]
+    pub input: String,
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct ApiBackupRestoreArgs {
+    #[arg(long)]
+    pub input: String,
+    #[arg(long)]
+    pub secret_file: Option<String>,
+    #[arg(long)]
+    pub allow_missing_attachments: bool,
+    #[arg(long)]
+    pub allow_large_attachment_conversion: bool,
+    #[arg(long)]
+    pub confirm: bool,
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct ApiTestCommand {
+    #[command(subcommand)]
+    pub command: ApiTestSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ApiTestSubcommand {
+    Login(ApiTestLoginArgs),
+    SeedSyncBackupCoverage(ApiRunIdArgs),
+    AssertSyncBackupCoverage(ApiRunIdArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct ApiTestLoginArgs {
+    #[arg(long)]
+    pub user: String,
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct ApiRunIdArgs {
+    #[arg(long)]
+    pub run_id: String,
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct ApiDryRunArgs {
+    #[arg(long)]
+    pub dry_run: bool,
 }
 
 #[derive(Debug, Args)]

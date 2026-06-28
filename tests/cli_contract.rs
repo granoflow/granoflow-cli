@@ -313,6 +313,160 @@ async fn health_calls_configured_api_base_url() {
 }
 
 #[tokio::test]
+async fn api_sync_commands_call_local_http_api_sync_endpoints() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/v1/sync/status"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"isAvailable": true}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/v1/sync/push"))
+        .and(body_json(serde_json::json!({})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"success": true}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "api",
+            "sync",
+            "status",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"isAvailable\": true"));
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "api",
+            "sync",
+            "push",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"success\": true"));
+}
+
+#[tokio::test]
+async fn api_backup_commands_call_app_backup_endpoints() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/backup/exports"))
+        .and(body_json(serde_json::json!({
+            "outputPath": "/tmp/out.flow.grano"
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"outputPath": "/tmp/out.flow.grano"}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/v1/backup/imports"))
+        .and(body_json(serde_json::json!({
+            "inputPath": "/tmp/out.flow.grano",
+            "secretFile": "/tmp/secret.txt",
+            "allowMissingAttachments": false,
+            "allowLargeAttachmentConversion": false,
+            "confirm": true
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"inputPath": "/tmp/out.flow.grano"}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "api",
+            "backup",
+            "export",
+            "--output",
+            "/tmp/out.flow.grano",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("/tmp/out.flow.grano"));
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "api",
+            "backup",
+            "restore",
+            "--input",
+            "/tmp/out.flow.grano",
+            "--secret-file",
+            "/tmp/secret.txt",
+            "--confirm",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("/tmp/out.flow.grano"));
+}
+
+#[tokio::test]
+async fn api_test_seed_command_uses_command_envelope_not_sqlite() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/commands"))
+        .and(body_json(serde_json::json!({
+            "command": "test-seed-sync-backup-coverage",
+            "arguments": {"run_id": "run-1"}
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "ok": true,
+            "data": {"run_id": "run-1"}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "api",
+            "test",
+            "seed-sync-backup-coverage",
+            "--run-id",
+            "run-1",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("\"run_id\": \"run-1\""));
+}
+
+#[tokio::test]
 async fn deck_list_calls_review_card_decks_endpoint() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))

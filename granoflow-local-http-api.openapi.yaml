@@ -94,6 +94,116 @@ paths:
           $ref: "#/components/responses/Error"
         "423":
           $ref: "#/components/responses/Error"
+  /v1/sync/status:
+    get:
+      tags: [Commands]
+      summary: Read App sync status through the shared SyncService
+      operationId: getSyncStatus
+      responses:
+        "200":
+          description: Sync status command response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/sync/push:
+    post:
+      tags: [Commands]
+      summary: Push local pending records through the shared SyncService
+      operationId: postSyncPush
+      responses:
+        "200":
+          description: Sync push command response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/sync/pull:
+    post:
+      tags: [Commands]
+      summary: Pull remote records through the shared SyncService
+      operationId: postSyncPull
+      responses:
+        "200":
+          description: Sync pull command response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/backup/exports:
+    post:
+      tags: [Commands]
+      summary: Export an App backup through the shared LocalBackupController
+      operationId: postBackupExport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [outputPath]
+              properties:
+                outputPath:
+                  type: string
+      responses:
+        "200":
+          description: Backup export command response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/backup/imports/preview:
+    post:
+      tags: [Commands]
+      summary: Preview an App backup package
+      operationId: postBackupImportPreview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inputPath]
+              properties:
+                inputPath:
+                  type: string
+      responses:
+        "200":
+          description: Backup preview command response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/backup/imports:
+    post:
+      tags: [Commands]
+      summary: Restore an App backup through the shared LocalBackupController
+      operationId: postBackupImportRestore
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [inputPath, confirm]
+              properties:
+                inputPath:
+                  type: string
+                secretFile:
+                  type: [string, "null"]
+                confirm:
+                  type: boolean
+                allowMissingAttachments:
+                  type: boolean
+                allowLargeAttachmentConversion:
+                  type: boolean
+      responses:
+        "200":
+          description: Backup restore command response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
   /v1/ai-agent/tools:
     get:
       tags: [Commands]
