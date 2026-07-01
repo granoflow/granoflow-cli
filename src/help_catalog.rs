@@ -50,6 +50,8 @@ pub fn json_help(lang: &Lang, command: &[String]) -> Value {
             "deck package preview <path.deck.grano>",
             "deck package import <path.deck.grano> [--import-study-history]",
             "deck package export --deck-id <deck-id> --out-path <path.deck.grano> [--include-study-history]",
+            "deck anki preview --input <path.apkg>",
+            "deck anki convert --input <path.apkg> --output <path.deck.grano>",
             "backup decrypt --input <encrypted.flow.grano> --output <plaintext.flow.grano> --secret-env <ENV>",
             "backup encrypt --input <plaintext.flow.grano> --output <encrypted.flow.grano> --secret-file <path>",
             "ai-agent tools",

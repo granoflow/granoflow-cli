@@ -73,9 +73,16 @@ granoflow card unarchive <card-id> --json
 granoflow card trash <card-id> --json
 granoflow card unlink --task-id <task-id> --card-id <card-id> --json
 granoflow card unlink-note --task-id <task-id> --note-id <note-id> --json
+granoflow deck anki preview --input <path.apkg> --json
+granoflow deck anki convert --input <path.apkg> --output <path.deck.grano> --json
 granoflow backup decrypt --input <encrypted.flow.grano> --output <plaintext.flow.grano> --secret-env <ENV> --json
 granoflow backup encrypt --input <plaintext.flow.grano> --output <encrypted.flow.grano> --secret-file <path> --json
 ```
+
+`deck anki preview` and `deck anki convert` are offline APKG conversion
+utilities. They run before API configuration is loaded and do not call the App
+or Local HTTP API. The converter writes a `.deck.grano` review-card deck package
+that the App can preview/import through the existing package reader.
 
 `backup decrypt` and `backup encrypt` are offline package conversion utilities.
 They run before API configuration is loaded and do not call the App or Local

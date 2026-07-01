@@ -4,7 +4,7 @@ use clap::Parser;
 use serde_json::{json, Value};
 
 use crate::{
-    backup,
+    anki, backup,
     cli::*,
     client::{request_preview, ApiClient},
     config::RuntimeConfig,
@@ -39,6 +39,12 @@ pub async fn run() -> anyhow::Result<i32> {
 async fn run_inner(cli: &Cli) -> CliResult<Value> {
     if let Some(Command::Backup(backup)) = &cli.command {
         return backup::run_backup(backup);
+    }
+    if let Some(Command::Deck(DeckCommand {
+        command: DeckSubcommand::Anki(anki),
+    })) = &cli.command
+    {
+        return anki::run_deck_anki(anki);
     }
     let config = RuntimeConfig::load(cli)?;
     let client = ApiClient::new(config.clone());
@@ -299,6 +305,7 @@ async fn run_deck(client: &ApiClient, deck: &DeckCommand) -> CliResult<Value> {
                 .await
         }
         DeckSubcommand::Package(package) => run_deck_package(client, package).await,
+        DeckSubcommand::Anki(_) => unreachable!("deck anki is handled before config loading"),
     }
 }
 

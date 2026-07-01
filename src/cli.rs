@@ -245,6 +245,7 @@ pub enum DeckSubcommand {
     Delete(DeckIdArg),
     Cards(DeckCardsArgs),
     Package(DeckPackageCommand),
+    Anki(DeckAnkiCommand),
 }
 
 #[derive(Debug, Args)]
@@ -310,6 +311,32 @@ pub struct DeckPackageExportArgs {
     pub version: String,
     #[arg(long)]
     pub include_study_history: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckAnkiCommand {
+    #[command(subcommand)]
+    pub command: DeckAnkiSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum DeckAnkiSubcommand {
+    Preview(DeckAnkiInputArgs),
+    Convert(DeckAnkiConvertArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct DeckAnkiInputArgs {
+    #[arg(long)]
+    pub input: String,
+}
+
+#[derive(Debug, Args)]
+pub struct DeckAnkiConvertArgs {
+    #[arg(long)]
+    pub input: String,
+    #[arg(long)]
+    pub output: String,
 }
 
 #[derive(Debug, Args)]

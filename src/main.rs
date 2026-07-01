@@ -1,8 +1,10 @@
+mod anki;
 mod backup;
 mod cli;
 mod client;
 mod commands;
 mod config;
+mod deck_package;
 mod errors;
 mod help_catalog;
 mod openapi_drift;

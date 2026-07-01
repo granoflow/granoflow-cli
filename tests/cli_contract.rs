@@ -3,6 +3,7 @@ use granoflow::openapi_drift::{
     CLI_KNOWN_PATHS, CRITICAL_OPENAPI_PATHS, INTENTIONALLY_UNSUPPORTED_OPENAPI_PATHS,
 };
 use predicates::prelude::*;
+use rusqlite::Connection;
 use serde_json::Value;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -238,6 +239,168 @@ fn backup_decrypt_rejects_old_backup_versions() {
         ));
 }
 
+#[test]
+fn deck_anki_preview_is_offline_and_ignores_broken_config() {
+    let temp = tempdir().unwrap();
+    let apkg = temp.path().join("sample.apkg");
+    let bad_config = temp.path().join("bad-config.toml");
+    std::fs::write(&bad_config, "not valid toml =").unwrap();
+    write_simple_apkg(&apkg).unwrap();
+
+    let output = Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--config",
+            bad_config.to_str().unwrap(),
+            "deck",
+            "anki",
+            "preview",
+            "--input",
+            apkg.to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let envelope: Value = serde_json::from_slice(&output).unwrap();
+    assert_eq!(envelope["ok"], true);
+    assert_eq!(envelope["data"]["command"], "deck anki preview");
+    assert_eq!(envelope["data"]["decision"], "can_convert");
+    assert_eq!(envelope["data"]["deckCount"], 1);
+    assert_eq!(envelope["data"]["noteCount"], 1);
+    assert_eq!(envelope["data"]["cardCount"], 1);
+    assert_eq!(envelope["data"]["convertibleCardCount"], 1);
+    assert_eq!(envelope["data"]["mediaCount"], 1);
+}
+
+#[test]
+fn deck_anki_preview_and_convert_explain_rejected_deck() {
+    let temp = tempdir().unwrap();
+    let apkg = temp.path().join("unsupported.apkg");
+    let output = temp.path().join("converted.deck.grano");
+    write_unconvertible_apkg(&apkg).unwrap();
+
+    let preview_output = Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "deck",
+            "anki",
+            "preview",
+            "--input",
+            apkg.to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let envelope: Value = serde_json::from_slice(&preview_output).unwrap();
+    assert_eq!(envelope["ok"], true);
+    assert_eq!(envelope["data"]["decision"], "rejected");
+    assert_eq!(envelope["data"]["reason"], "no_convertible_cards");
+    assert_eq!(envelope["data"]["convertibleCardCount"], 0);
+    assert_eq!(envelope["data"]["skippedCardCount"], 1);
+    assert!(envelope["data"]["message"]
+        .as_str()
+        .unwrap()
+        .contains("cannot be converted yet"));
+    assert!(envelope["data"]["details"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|detail| detail.as_str().unwrap().contains("Found 1 Anki card(s)")));
+    assert!(envelope["data"]["nextAction"]
+        .as_str()
+        .unwrap()
+        .contains("Front/Back"));
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "deck",
+            "anki",
+            "convert",
+            "--input",
+            apkg.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+        ])
+        .assert()
+        .failure()
+        .stdout(predicate::str::contains("cannot be converted yet"))
+        .stdout(predicate::str::contains("no_convertible_cards"))
+        .stdout(predicate::str::contains("Front/Back"));
+}
+
+#[test]
+fn deck_anki_convert_writes_app_readable_deck_package_and_rejects_overwrite() {
+    let temp = tempdir().unwrap();
+    let apkg = temp.path().join("sample.apkg");
+    let output = temp.path().join("converted.deck.grano");
+    write_simple_apkg(&apkg).unwrap();
+
+    let convert_output = Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "deck",
+            "anki",
+            "convert",
+            "--input",
+            apkg.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let envelope: Value = serde_json::from_slice(&convert_output).unwrap();
+    assert_eq!(envelope["data"]["command"], "deck anki convert");
+    assert_eq!(envelope["data"]["cardCount"], 1);
+    assert_eq!(envelope["data"]["mediaCount"], 1);
+
+    let manifest = read_zip_json(&output, "manifest.json").unwrap();
+    assert_eq!(manifest["artifact_type"], "granoflow.review_card_deck");
+    assert_eq!(manifest["schema_version"], 6);
+    assert_eq!(manifest["card_count"], 1);
+    assert_eq!(manifest["media_count"], 1);
+    assert!(!manifest["package_sha"].as_str().unwrap().is_empty());
+    assert_eq!(manifest["top_deck"]["name"], "Imported");
+
+    let content = read_zip_json(&output, "content.json").unwrap();
+    assert_eq!(content["cards"][0]["front"], "What is Granoflow?");
+    assert_eq!(content["cards"][0]["back"], "A local-first planning app");
+    assert_eq!(content["cards"][0]["source_kind"], "deck_apkg_import");
+    assert_eq!(content["decks"][0]["display_name"], "Imported");
+    assert!(content["review_note_types"].as_array().unwrap().is_empty());
+
+    let media_manifest = read_zip_json(&output, "media_manifest.json").unwrap();
+    assert_eq!(media_manifest["items"][0]["original_filename"], "image.png");
+    assert_eq!(media_manifest["items"][0]["mime_type"], "image/png");
+
+    Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "deck",
+            "anki",
+            "convert",
+            "--input",
+            apkg.to_str().unwrap(),
+            "--output",
+            output.to_str().unwrap(),
+        ])
+        .assert()
+        .failure()
+        .stdout(predicate::str::contains("output package already exists"));
+}
+
 fn write_plaintext_backup(path: &Path, title: &str) -> std::io::Result<()> {
     write_plaintext_backup_with_version(path, title, 3)
 }
@@ -289,6 +452,101 @@ fn read_zip_string(path: &Path, entry_name: &str) -> Result<String, Box<dyn std:
     let mut raw = String::new();
     entry.read_to_string(&mut raw)?;
     Ok(raw)
+}
+
+fn write_simple_apkg(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = tempdir()?;
+    let collection_path = temp.path().join("collection.anki2");
+    let db = Connection::open(&collection_path)?;
+    db.execute_batch(
+        r#"
+        CREATE TABLE col (decks TEXT NOT NULL, models TEXT NOT NULL);
+        CREATE TABLE notes (id INTEGER PRIMARY KEY, mid INTEGER NOT NULL, tags TEXT NOT NULL, flds TEXT NOT NULL);
+        CREATE TABLE cards (id INTEGER PRIMARY KEY, nid INTEGER NOT NULL, did INTEGER NOT NULL, ord INTEGER NOT NULL);
+        "#,
+    )?;
+    let decks = serde_json::json!({
+        "1": {"name": "Default"},
+        "2": {"name": "Focus::Imported"}
+    });
+    let models = serde_json::json!({
+        "1": {
+            "name": "Basic",
+            "flds": [{"name": "Front"}, {"name": "Back"}],
+            "tmpls": [{"name": "Card 1"}]
+        }
+    });
+    db.execute(
+        "INSERT INTO col (decks, models) VALUES (?1, ?2)",
+        [&decks.to_string(), &models.to_string()],
+    )?;
+    db.execute(
+        "INSERT INTO notes (id, mid, tags, flds) VALUES (10, 1, '', ?1)",
+        ["What is Granoflow?\u{001f}A local-first planning app"],
+    )?;
+    db.execute(
+        "INSERT INTO cards (id, nid, did, ord) VALUES (20, 10, 2, 0)",
+        [],
+    )?;
+    drop(db);
+
+    let file = std::fs::File::create(path)?;
+    let mut zip = ZipWriter::new(file);
+    let options = SimpleFileOptions::default();
+    zip.start_file("collection.anki2", options)?;
+    zip.write_all(&std::fs::read(collection_path)?)?;
+    zip.start_file("media", options)?;
+    zip.write_all(br#"{"0":"image.png"}"#)?;
+    zip.start_file("0", options)?;
+    zip.write_all(&[137, 80, 78, 71, 13, 10, 26, 10])?;
+    zip.finish()?;
+    Ok(())
+}
+
+fn write_unconvertible_apkg(path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+    let temp = tempdir()?;
+    let collection_path = temp.path().join("collection.anki2");
+    let db = Connection::open(&collection_path)?;
+    db.execute_batch(
+        r#"
+        CREATE TABLE col (decks TEXT NOT NULL, models TEXT NOT NULL);
+        CREATE TABLE notes (id INTEGER PRIMARY KEY, mid INTEGER NOT NULL, tags TEXT NOT NULL, flds TEXT NOT NULL);
+        CREATE TABLE cards (id INTEGER PRIMARY KEY, nid INTEGER NOT NULL, did INTEGER NOT NULL, ord INTEGER NOT NULL);
+        "#,
+    )?;
+    let decks = serde_json::json!({
+        "1": {"name": "Default"}
+    });
+    let models = serde_json::json!({
+        "1": {
+            "name": "One-sided",
+            "flds": [{"name": "Text"}],
+            "tmpls": [{"name": "Card 1"}]
+        }
+    });
+    db.execute(
+        "INSERT INTO col (decks, models) VALUES (?1, ?2)",
+        [&decks.to_string(), &models.to_string()],
+    )?;
+    db.execute(
+        "INSERT INTO notes (id, mid, tags, flds) VALUES (10, 1, '', ?1)",
+        ["Only one visible side"],
+    )?;
+    db.execute(
+        "INSERT INTO cards (id, nid, did, ord) VALUES (20, 10, 1, 0)",
+        [],
+    )?;
+    drop(db);
+
+    let file = std::fs::File::create(path)?;
+    let mut zip = ZipWriter::new(file);
+    let options = SimpleFileOptions::default();
+    zip.start_file("collection.anki2", options)?;
+    zip.write_all(&std::fs::read(collection_path)?)?;
+    zip.start_file("media", options)?;
+    zip.write_all(br#"{}"#)?;
+    zip.finish()?;
+    Ok(())
 }
 
 #[tokio::test]
