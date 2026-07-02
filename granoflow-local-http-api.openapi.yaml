@@ -567,6 +567,474 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{id}/images:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List task images
+      operationId: listTaskImages
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add task image from a local file path
+      operationId: addTaskImage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{id}/images/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete task image
+      operationId: deleteTaskImage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{id}/pdfs:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List task pdfs
+      operationId: listTaskPdfs
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add task pdf from a local file path
+      operationId: addTaskPdf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{id}/pdfs/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete task pdf
+      operationId: deleteTaskPdf
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{id}/attachments:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List task attachments
+      operationId: listTaskAttachments
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add task attachment from a local file path
+      operationId: addTaskAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/tasks/{id}/attachments/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete task attachment
+      operationId: deleteTaskAttachment
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/projects/{id}/images:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List project images
+      operationId: listProjectImages
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add project image from a local file path
+      operationId: addProjectImage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/projects/{id}/images/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete project image
+      operationId: deleteProjectImage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/projects/{id}/pdfs:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List project pdfs
+      operationId: listProjectPdfs
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add project pdf from a local file path
+      operationId: addProjectPdf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/projects/{id}/pdfs/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete project pdf
+      operationId: deleteProjectPdf
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/projects/{id}/attachments:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List project attachments
+      operationId: listProjectAttachments
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add project attachment from a local file path
+      operationId: addProjectAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/projects/{id}/attachments/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete project attachment
+      operationId: deleteProjectAttachment
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/milestones/{id}/images:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List milestone images
+      operationId: listMilestoneImages
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add milestone image from a local file path
+      operationId: addMilestoneImage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/milestones/{id}/images/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete milestone image
+      operationId: deleteMilestoneImage
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/milestones/{id}/pdfs:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List milestone pdfs
+      operationId: listMilestonePdfs
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add milestone pdf from a local file path
+      operationId: addMilestonePdf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/milestones/{id}/pdfs/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete milestone pdf
+      operationId: deleteMilestonePdf
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/milestones/{id}/attachments:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+    get:
+      tags: [Resources]
+      summary: List milestone attachments
+      operationId: listMilestoneAttachments
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+    post:
+      tags: [Resources]
+      summary: Add milestone attachment from a local file path
+      operationId: addMilestoneAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  description: Local file path readable by the running Granoflow app.
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+  /v1/milestones/{id}/attachments/{attachmentId}:
+    parameters:
+      - $ref: "#/components/parameters/ResourceId"
+      - name: attachmentId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      tags: [Resources]
+      summary: Delete milestone attachment
+      operationId: deleteMilestoneAttachment
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
   /v1/tags:
     get:
       tags: [Resources]
