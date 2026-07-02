@@ -59,6 +59,7 @@ pub enum Command {
     Api(ApiCommand),
     Task(TaskCommand),
     Project(ProjectCommand),
+    Milestone(MilestoneCommand),
     Review(ReviewCommand),
     Deck(DeckCommand),
     Card(CardCommand),
@@ -193,6 +194,9 @@ pub enum TaskSubcommand {
     List,
     Create(InputArgs),
     Complete(TaskCompleteArgs),
+    Image(AttachmentCommand),
+    Pdf(AttachmentCommand),
+    Attachment(AttachmentCommand),
 }
 
 #[derive(Debug, Args)]
@@ -205,6 +209,63 @@ pub struct ProjectCommand {
 pub enum ProjectSubcommand {
     List,
     Create(InputArgs),
+    Image(AttachmentCommand),
+    Pdf(AttachmentCommand),
+    Attachment(AttachmentCommand),
+}
+
+#[derive(Debug, Args)]
+pub struct MilestoneCommand {
+    #[command(subcommand)]
+    pub command: MilestoneSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum MilestoneSubcommand {
+    List,
+    Create(InputArgs),
+    Image(AttachmentCommand),
+    Pdf(AttachmentCommand),
+    Attachment(AttachmentCommand),
+}
+
+#[derive(Debug, Args)]
+pub struct AttachmentCommand {
+    #[command(subcommand)]
+    pub command: AttachmentSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AttachmentSubcommand {
+    List(AttachmentEntityArgs),
+    Add(AttachmentAddArgs),
+    Delete(AttachmentDeleteArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct AttachmentEntityArgs {
+    #[arg(long)]
+    pub id: String,
+}
+
+#[derive(Debug, Args)]
+pub struct AttachmentAddArgs {
+    #[arg(long)]
+    pub id: String,
+    #[arg(long)]
+    pub file: String,
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct AttachmentDeleteArgs {
+    #[arg(long)]
+    pub id: String,
+    #[arg(long)]
+    pub attachment_id: String,
+    #[arg(long)]
+    pub dry_run: bool,
 }
 
 #[derive(Debug, Args)]

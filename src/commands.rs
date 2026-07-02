@@ -62,6 +62,7 @@ async fn run_inner(cli: &Cli) -> CliResult<Value> {
         Some(Command::Api(api)) => run_api(&client, api).await,
         Some(Command::Task(task)) => run_task(&client, task).await,
         Some(Command::Project(project)) => run_project(&client, project).await,
+        Some(Command::Milestone(milestone)) => run_milestone(&client, milestone).await,
         Some(Command::Review(review)) => run_review(&client, review).await,
         Some(Command::Deck(deck)) => run_deck(&client, deck).await,
         Some(Command::Card(card)) => run_card(&client, card).await,
@@ -202,6 +203,11 @@ async fn run_task(client: &ApiClient, task: &TaskCommand) -> CliResult<Value> {
                 client.post(&path, body).await
             }
         }
+        TaskSubcommand::Image(command) => run_attachment(client, "tasks", "images", command).await,
+        TaskSubcommand::Pdf(command) => run_attachment(client, "tasks", "pdfs", command).await,
+        TaskSubcommand::Attachment(command) => {
+            run_attachment(client, "tasks", "attachments", command).await
+        }
     }
 }
 
@@ -214,6 +220,76 @@ async fn run_project(client: &ApiClient, project: &ProjectCommand) -> CliResult<
                 Ok(request_preview("POST", "/v1/projects", body))
             } else {
                 client.post("/v1/projects", body).await
+            }
+        }
+        ProjectSubcommand::Image(command) => {
+            run_attachment(client, "projects", "images", command).await
+        }
+        ProjectSubcommand::Pdf(command) => {
+            run_attachment(client, "projects", "pdfs", command).await
+        }
+        ProjectSubcommand::Attachment(command) => {
+            run_attachment(client, "projects", "attachments", command).await
+        }
+    }
+}
+
+async fn run_milestone(client: &ApiClient, milestone: &MilestoneCommand) -> CliResult<Value> {
+    match &milestone.command {
+        MilestoneSubcommand::List => client.get("/v1/milestones").await,
+        MilestoneSubcommand::Create(args) => {
+            let body = read_json_input(&args.input)?;
+            if args.dry_run {
+                Ok(request_preview("POST", "/v1/milestones", body))
+            } else {
+                client.post("/v1/milestones", body).await
+            }
+        }
+        MilestoneSubcommand::Image(command) => {
+            run_attachment(client, "milestones", "images", command).await
+        }
+        MilestoneSubcommand::Pdf(command) => {
+            run_attachment(client, "milestones", "pdfs", command).await
+        }
+        MilestoneSubcommand::Attachment(command) => {
+            run_attachment(client, "milestones", "attachments", command).await
+        }
+    }
+}
+
+async fn run_attachment(
+    client: &ApiClient,
+    resource: &str,
+    attachment_resource: &str,
+    command: &AttachmentCommand,
+) -> CliResult<Value> {
+    match &command.command {
+        AttachmentSubcommand::List(args) => {
+            client
+                .get(&format!(
+                    "/v1/{}/{}/{}",
+                    resource, args.id, attachment_resource
+                ))
+                .await
+        }
+        AttachmentSubcommand::Add(args) => {
+            let path = format!("/v1/{}/{}/{}", resource, args.id, attachment_resource);
+            let body = json!({"file": args.file});
+            if args.dry_run {
+                Ok(request_preview("POST", &path, body))
+            } else {
+                client.post(&path, body).await
+            }
+        }
+        AttachmentSubcommand::Delete(args) => {
+            let path = format!(
+                "/v1/{}/{}/{}/{}",
+                resource, args.id, attachment_resource, args.attachment_id
+            );
+            if args.dry_run {
+                Ok(request_preview("DELETE", &path, json!({})))
+            } else {
+                client.delete(&path).await
             }
         }
     }
