@@ -127,6 +127,72 @@ fn task_complete_uses_business_complete_route_in_dry_run() {
     assert_eq!(envelope["data"]["body"], serde_json::json!({}));
 }
 
+#[tokio::test]
+async fn review_month_show_uses_month_rest_route() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .and(path("/v1/reviews/months/2026-05"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({
+            "entity_type": "review.month",
+            "entity": {"year": 2026, "month": 5, "content": "A useful month"}
+        })))
+        .expect(1)
+        .mount(&server)
+        .await;
+
+    let output = Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "--api-base-url",
+            &server.uri(),
+            "review",
+            "month",
+            "show",
+            "--month",
+            "2026-05",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let envelope: Value = serde_json::from_slice(&output).unwrap();
+    assert_eq!(envelope["data"]["entity"]["content"], "A useful month");
+}
+
+#[test]
+fn review_month_update_dry_run_uses_month_patch_route() {
+    let input = NamedTempFile::new().unwrap();
+    std::fs::write(input.path(), r#"{"content":"A useful month"}"#).unwrap();
+    let output = Command::cargo_bin("granoflow")
+        .unwrap()
+        .args([
+            "--json",
+            "review",
+            "month",
+            "update",
+            "--month",
+            "2026-05",
+            "--input",
+            input.path().to_str().unwrap(),
+            "--dry-run",
+        ])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let envelope: Value = serde_json::from_slice(&output).unwrap();
+    assert_eq!(envelope["data"]["previewMode"], "local_request_only");
+    assert_eq!(envelope["data"]["method"], "PATCH");
+    assert_eq!(envelope["data"]["path"], "/v1/reviews/months/2026-05");
+    assert_eq!(
+        envelope["data"]["body"],
+        serde_json::json!({"content": "A useful month"})
+    );
+}
+
 #[test]
 fn reads_json_input_from_stdin() {
     let mut command = Command::cargo_bin("granoflow").unwrap();
