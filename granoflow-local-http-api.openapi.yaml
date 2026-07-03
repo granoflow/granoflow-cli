@@ -1633,7 +1633,7 @@ paths:
     get:
       tags: [Reviews]
       summary: Get monthly review aggregate
-      description: Reads the monthly aggregate review. Monthly review is read-only in this version.
+      description: Reads the monthly aggregate review and editable monthly review content.
       operationId: getMonthlyReview
       responses:
         "200":
@@ -1642,6 +1642,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MonthlyReviewResult"
+        "401":
+          $ref: "#/components/responses/Error"
+        "423":
+          $ref: "#/components/responses/Error"
+    patch:
+      tags: [Reviews]
+      summary: Update monthly review content
+      description: Updates the monthly review content. Monthly aggregate metrics remain read-only.
+      operationId: updateMonthlyReview
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MonthlyReviewPatchRequest"
+      responses:
+        "200":
+          description: Updated monthly review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyReviewResult"
+        "400":
+          $ref: "#/components/responses/Error"
         "401":
           $ref: "#/components/responses/Error"
         "423":
@@ -1936,9 +1960,19 @@ components:
           type: integer
         averageDailyMinutes:
           type: integer
+        totalRealFocusMinutes:
+          type: integer
         mostActiveDate:
           type: [string, "null"]
           format: date
+        content:
+          type: [string, "null"]
+    MonthlyReviewPatchRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        content:
+          type: string
     ErrorEnvelope:
       type: object
       required: [error]
