@@ -342,6 +342,23 @@ async fn run_review(client: &ApiClient, review: &ReviewCommand) -> CliResult<Val
                 .await
             }
         },
+        ReviewPeriod::Month(month) => match &month.command {
+            ReviewMonthSubcommand::Show(args) => {
+                client
+                    .get(&format!("/v1/reviews/months/{}", args.month))
+                    .await
+            }
+            ReviewMonthSubcommand::Update(args) => {
+                write_or_preview(
+                    client,
+                    "PATCH",
+                    &format!("/v1/reviews/months/{}", args.month),
+                    read_json_input(&args.input)?,
+                    args.dry_run,
+                )
+                .await
+            }
+        },
     }
 }
 

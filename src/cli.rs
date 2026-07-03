@@ -465,6 +465,7 @@ pub struct TaskNoteArg {
 pub enum ReviewPeriod {
     Day(ReviewDayCommand),
     Week(ReviewWeekCommand),
+    Month(ReviewMonthCommand),
 }
 
 #[derive(Debug, Args)]
@@ -493,6 +494,18 @@ pub enum ReviewWeekSubcommand {
 }
 
 #[derive(Debug, Args)]
+pub struct ReviewMonthCommand {
+    #[command(subcommand)]
+    pub command: ReviewMonthSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum ReviewMonthSubcommand {
+    Show(MonthArg),
+    Update(MonthInputArgs),
+}
+
+#[derive(Debug, Args)]
 pub struct DateArg {
     #[arg(long)]
     pub date: String,
@@ -502,6 +515,12 @@ pub struct DateArg {
 pub struct WeekArg {
     #[arg(long = "week-start")]
     pub week_start: String,
+}
+
+#[derive(Debug, Args)]
+pub struct MonthArg {
+    #[arg(long)]
+    pub month: String,
 }
 
 #[derive(Debug, Args)]
@@ -518,6 +537,16 @@ pub struct DateInputArgs {
 pub struct WeekInputArgs {
     #[arg(long = "week-start")]
     pub week_start: String,
+    #[arg(long)]
+    pub input: String,
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct MonthInputArgs {
+    #[arg(long)]
+    pub month: String,
     #[arg(long)]
     pub input: String,
     #[arg(long)]
