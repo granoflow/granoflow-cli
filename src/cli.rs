@@ -575,6 +575,22 @@ pub struct AiAgentCommand {
 pub enum AiAgentSubcommand {
     Tools,
     Task(AiAgentTaskCommand),
+    #[command(name = "project-context")]
+    ProjectContext(AiAgentProjectContextCommand),
+}
+
+#[derive(Debug, Args)]
+pub struct AiAgentProjectContextCommand {
+    #[command(subcommand)]
+    pub command: AiAgentProjectContextSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AiAgentProjectContextSubcommand {
+    Ensure(AiInputArgs),
+    Read(AiInputArgs),
+    Reconcile(AiInputArgs),
+    Write(AiInputArgs),
 }
 
 #[derive(Debug, Args)]

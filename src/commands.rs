@@ -515,6 +515,40 @@ async fn run_ai_agent(client: &ApiClient, ai_agent: &AiAgentCommand) -> CliResul
                 client.post(path, read_json_input(&args.input)?).await
             }
         },
+        AiAgentSubcommand::ProjectContext(command) => match &command.command {
+            AiAgentProjectContextSubcommand::Ensure(args) => {
+                client
+                    .post(
+                        "/v1/ai-agent/project-context-attachments/ensure",
+                        read_json_input(&args.input)?,
+                    )
+                    .await
+            }
+            AiAgentProjectContextSubcommand::Read(args) => {
+                client
+                    .post(
+                        "/v1/ai-agent/project-context-attachments/read",
+                        read_json_input(&args.input)?,
+                    )
+                    .await
+            }
+            AiAgentProjectContextSubcommand::Reconcile(args) => {
+                client
+                    .post(
+                        "/v1/ai-agent/project-context-attachments/reconcile",
+                        read_json_input(&args.input)?,
+                    )
+                    .await
+            }
+            AiAgentProjectContextSubcommand::Write(args) => {
+                client
+                    .post(
+                        "/v1/ai-agent/project-context-attachments/write",
+                        read_json_input(&args.input)?,
+                    )
+                    .await
+            }
+        },
     }
 }
 

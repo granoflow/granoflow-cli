@@ -68,7 +68,11 @@ pub fn json_help(lang: &Lang, command: &[String]) -> Value {
             "ai-agent tools",
             "ai-agent task export --id <task-id>",
             "ai-agent task validate --input <file|->",
-            "ai-agent task import --input <file|-> [--dry-run]"
+            "ai-agent task import --input <file|-> [--dry-run]",
+            "ai-agent project-context ensure --input <file|->",
+            "ai-agent project-context read --input <file|->",
+            "ai-agent project-context reconcile --input <file|->",
+            "ai-agent project-context write --input <file|->",
         ],
         "exitCodes": {
             "0": "success",

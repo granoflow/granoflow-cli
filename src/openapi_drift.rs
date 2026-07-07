@@ -52,6 +52,10 @@ pub const CLI_KNOWN_PATHS: &[&str] = &[
     "/v1/ai-agent/tasks/{id}/export",
     "/v1/ai-agent/tasks/validate",
     "/v1/ai-agent/tasks/import",
+    "/v1/ai-agent/project-context-attachments/ensure",
+    "/v1/ai-agent/project-context-attachments/read",
+    "/v1/ai-agent/project-context-attachments/reconcile",
+    "/v1/ai-agent/project-context-attachments/write",
 ];
 
 #[allow(dead_code)]
@@ -111,6 +115,10 @@ pub const CRITICAL_OPENAPI_PATHS: &[&str] = &[
     "/v1/ai-agent/tasks/{id}/export",
     "/v1/ai-agent/tasks/validate",
     "/v1/ai-agent/tasks/import",
+    "/v1/ai-agent/project-context-attachments/ensure",
+    "/v1/ai-agent/project-context-attachments/read",
+    "/v1/ai-agent/project-context-attachments/reconcile",
+    "/v1/ai-agent/project-context-attachments/write",
 ];
 
 #[allow(dead_code)]

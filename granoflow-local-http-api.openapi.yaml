@@ -1670,6 +1670,146 @@ paths:
           $ref: "#/components/responses/Error"
         "423":
           $ref: "#/components/responses/Error"
+  /v1/ai-agent/project-context-attachments/ensure:
+    post:
+      tags: [Commands]
+      summary: Ensure canonical project context YAML attachments exist
+      operationId: ensureAiAgentProjectContextAttachments
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId]
+              properties:
+                projectId:
+                  type: string
+                dryRun:
+                  type: boolean
+                  default: true
+      responses:
+        "200":
+          description: Canonical attachment status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "423":
+          $ref: "#/components/responses/Error"
+  /v1/ai-agent/project-context-attachments/read:
+    post:
+      tags: [Commands]
+      summary: Read a bounded project context YAML section
+      operationId: readAiAgentProjectContextAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId]
+              properties:
+                projectId:
+                  type: string
+                attachment:
+                  type: string
+                section:
+                  type: string
+                query:
+                  type: string
+                intent:
+                  type: string
+                allowFullRead:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Bounded attachment content or stale/conflict status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "423":
+          $ref: "#/components/responses/Error"
+  /v1/ai-agent/project-context-attachments/reconcile:
+    post:
+      tags: [Commands]
+      summary: Check or reconcile project context YAML freshness
+      operationId: reconcileAiAgentProjectContextAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId]
+              properties:
+                projectId:
+                  type: string
+                attachment:
+                  type: string
+                dryRun:
+                  type: boolean
+                  default: true
+      responses:
+        "200":
+          description: Freshness or reconcile result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "423":
+          $ref: "#/components/responses/Error"
+  /v1/ai-agent/project-context-attachments/write:
+    post:
+      tags: [Commands]
+      summary: Write a project context YAML attachment with safety gates
+      operationId: writeAiAgentProjectContextAttachment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [projectId, content]
+              properties:
+                projectId:
+                  type: string
+                attachment:
+                  type: string
+                section:
+                  type: string
+                content:
+                  type: string
+                confirmed:
+                  type: boolean
+                  default: false
+      responses:
+        "200":
+          description: Write result, proposal, or fail-closed error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandResult"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "423":
+          $ref: "#/components/responses/Error"
 components:
   securitySchemes:
     bearerAuth:
